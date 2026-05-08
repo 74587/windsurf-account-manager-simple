@@ -403,7 +403,7 @@
 
           <div class="accounts-grid">
             <AccountCard
-              v-for="account in accountsStore.paginatedAccounts"
+              v-for="account in renderedAccounts"
               :key="account.id"
               :account="account"
               :is-selected="accountsStore.selectedAccounts.has(account.id)"
@@ -412,12 +412,16 @@
               @update="handleAccountUpdate"
             />
           </div>
+
+          <div v-if="isRenderingAccountBatch" class="account-rendering-hint">
+            正在渲染更多账号...
+          </div>
           
           <!-- 分页组件 -->
           <div class="pagination-container" v-if="accountsStore.totalCount > accountsStore.pagination.pageSize">
             <el-pagination
-              v-model:current-page="accountsStore.pagination.currentPage"
-              v-model:page-size="accountsStore.pagination.pageSize"
+              :current-page="accountsStore.pagination.currentPage"
+              :page-size="accountsStore.pagination.pageSize"
               :page-sizes="accountsStore.pagination.pageSizes"
               :total="accountsStore.totalCount"
               layout="total, sizes, prev, pager, next, jumper"
@@ -668,8 +672,11 @@ const settingsStore = useSettingsStore();
 const uiStore = useUIStore();
 
 const SIDEBAR_MENU_EXPAND_DELAY_MS = 140;
+const ACCOUNT_CARD_INITIAL_RENDER_COUNT = 20;
+const ACCOUNT_CARD_RENDER_BATCH_SIZE = 20;
 const menuCollapsed = ref(uiStore.sidebarCollapsed);
 let sidebarMenuTimer: ReturnType<typeof setTimeout> | undefined;
+let accountRenderFrameId: number | undefined;
 
 const activeMenu = ref('accounts');
 const searchQuery = ref('');
@@ -694,6 +701,9 @@ const batchGroupTarget = ref('');
 const isBatchUpdatingGroup = ref(false);
 const showAutoResetDialog = ref(false);
 const showCardGeneratorDialog = ref(false);
+const visibleAccountCount = ref(ACCOUNT_CARD_INITIAL_RENDER_COUNT);
+const renderedAccounts = computed(() => accountsStore.paginatedAccounts.slice(0, visibleAccountCount.value));
+const isRenderingAccountBatch = computed(() => visibleAccountCount.value < accountsStore.paginatedAccounts.length);
 
 // 排序相关
 const currentSortField = ref<string>('custom');
@@ -886,6 +896,55 @@ watch(() => uiStore.sidebarCollapsed, (collapsed) => {
 
   scheduleMenuExpand();
 });
+
+function clearAccountRenderFrame() {
+  if (accountRenderFrameId !== undefined) {
+    cancelAnimationFrame(accountRenderFrameId);
+    accountRenderFrameId = undefined;
+  }
+}
+
+function scheduleAccountBatchRender() {
+  clearAccountRenderFrame();
+
+  const renderNextBatch = () => {
+    const total = accountsStore.paginatedAccounts.length;
+    if (visibleAccountCount.value >= total) {
+      accountRenderFrameId = undefined;
+      return;
+    }
+
+    visibleAccountCount.value = Math.min(
+      visibleAccountCount.value + ACCOUNT_CARD_RENDER_BATCH_SIZE,
+      total
+    );
+
+    if (visibleAccountCount.value < total) {
+      accountRenderFrameId = requestAnimationFrame(renderNextBatch);
+      return;
+    }
+
+    accountRenderFrameId = undefined;
+  };
+
+  accountRenderFrameId = requestAnimationFrame(renderNextBatch);
+}
+
+watch(
+  () => accountsStore.paginatedAccounts.map(account => account.id).join('|'),
+  () => {
+    const total = accountsStore.paginatedAccounts.length;
+    visibleAccountCount.value = Math.min(ACCOUNT_CARD_INITIAL_RENDER_COUNT, total);
+
+    if (visibleAccountCount.value < total) {
+      scheduleAccountBatchRender();
+      return;
+    }
+
+    clearAccountRenderFrame();
+  },
+  { immediate: true }
+);
 
 // 全选状态：在分组视图中用该分组账号数判断，无分组时用总数
 const isAllSelected = computed(() => {
@@ -2117,6 +2176,7 @@ onMounted(async () => {
 // 组件卸载时清除自动重置定时器
 onUnmounted(() => {
   clearSidebarMenuTimer();
+  clearAccountRenderFrame();
   autoResetTimerMap.value.forEach(timer => clearInterval(timer));
   autoResetTimerMap.value.clear();
 });
@@ -2798,16 +2858,25 @@ onUnmounted(() => {
 
 .accounts-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(min(100%, 320px), 1fr));
-  gap: 8px;
-  width: 100%;
-  padding: 0;
+  grid-template-columns: repeat(auto-fill, minmax(clamp(272px, 28vw, 360px), 360px));
+  gap: 16px;
+  padding: 0 0 20px;
+  justify-content: start;
+  align-items: start;
+}
+
+.account-rendering-hint {
+  display: flex;
+  justify-content: center;
+  padding: 10px 0 4px;
+  color: #909399;
+  font-size: 12px;
 }
 
 /* 响应式布局 */
 @media (max-width: 1400px) {
   .accounts-grid {
-    grid-template-columns: repeat(auto-fit, minmax(min(100%, 300px), 1fr));
+    grid-template-columns: repeat(auto-fill, minmax(min(100%, 300px), 360px));
   }
 }
 

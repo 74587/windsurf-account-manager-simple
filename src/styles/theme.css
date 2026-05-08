@@ -3512,8 +3512,6 @@ html[data-theme] .accounts-grid {
 
 html[data-theme] .accounts-grid .account-card {
   contain: layout paint;
-  content-visibility: auto;
-  contain-intrinsic-size: 360px;
   box-shadow: 0 6px 16px rgba(15, 23, 42, 0.08) !important;
   transition: border-color 0.16s ease, background-color 0.16s ease !important;
 }
