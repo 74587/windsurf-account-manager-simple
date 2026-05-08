@@ -6,7 +6,7 @@
 
 ## 📦 项目信息
 
-- **当前版本**: 1.7.7
+- **当前版本**: 1.7.9
 - **许可证**: AGPL-3.0
 - **开发语言**: Rust + TypeScript
 - **支持平台**: Windows 10/11
@@ -124,6 +124,14 @@
 ---
 
 ## 📜 版本历史
+
+### v1.7.9 (2026-05-08)
+- **UI 首屏性能优化**：对 Settings、团队管理、自动重置、账号信息等重内容弹窗的 `el-tab-pane` 增加懒渲染，避免打开父弹窗时一次性挂载所有表格、表单和信息面板
+- **二级弹窗按需挂载**：团队管理、团队设置、账号信息、设置备份、自动重置编辑等隐藏子弹窗改为 `v-if` 按需挂载，减少父弹窗首开 DOM 数量和隐藏表单初始化成本
+- **图表库延迟加载**：`AnalyticsDialog` 中的 ECharts 改为打开分析页并初始化图表时动态导入，避免图表库进入账号页初始加载路径
+- **团队管理数据按需加载**：团队管理弹窗打开时只加载默认成员页数据，邀请、我的邀请、待审批等数据切换到对应 tab 时再请求，并避免从非默认 tab 重新打开时重复加载成员列表
+- **账号信息页渲染优化**：账号详情、Firebase、API 密钥、Provider Key 等信息页改为懒渲染，同时保持切换到 API Key / Provider Key 时才加载对应数据的原有逻辑
+- **构建错误修复**：移除 `SettingsDialog.vue` 中无效的 `clientDisplayName` 残留赋值，修复 `vue-tsc` 报出的 TS2304 / TS2339 构建错误
 
 ### v1.7.8 (2026-05-04)
 - **Windsurf 新登录协议适配**：Windsurf 后端更新 `WindsurfPostAuth` 接口，新增要求 `X-Devin-Auth1-Token` HTTP header。已在 `devin_auth_service.rs::windsurf_post_auth` 中补充该 header，所有 Devin 登录/注册/多组织选择流程自动生效

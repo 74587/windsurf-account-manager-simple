@@ -6,7 +6,7 @@ A Windsurf multi-account management desktop application built with Tauri + Vue 3
 
 ## 📦 Project Information
 
-- **Current Version**: 1.7.7
+- **Current Version**: 1.7.9
 - **License**: AGPL-3.0
 - **Development Language**: Rust + TypeScript
 - **Supported Platforms**: Windows 10/11
@@ -124,6 +124,14 @@ A Windsurf multi-account management desktop application built with Tauri + Vue 3
 ---
 
 ## 📜 Version History
+
+### v1.7.9 (2026-05-08)
+- **Initial UI load performance optimization**: Added lazy rendering to heavy `el-tab-pane` sections in Settings, Team Management, Auto Reset, Account Info, and related dialogs, preventing all tables, forms, and information panels from mounting when the parent dialog first opens
+- **On-demand mounting for nested dialogs**: Hidden child dialogs in Team Management, Team Settings, Account Info, Settings backups, Auto Reset editing, and related flows now use `v-if` on-demand mounting to reduce initial DOM size and hidden form initialization cost
+- **Deferred chart library loading**: ECharts in `AnalyticsDialog` is now dynamically imported only when the analytics dialog initializes charts, keeping the charting library out of the account page initial loading path
+- **On-demand Team Management data loading**: Team Management now loads only the default members tab on open; invitations, my invitation, pending requests, and other tab data are requested only when their tabs become active, while avoiding duplicate member loading when reopening from a non-default tab
+- **Account Info rendering optimization**: User details, Firebase, API Keys, Provider Key, and other information tabs now render lazily while preserving the existing logic that loads API Key / Provider Key data only when those tabs are selected
+- **Build error fix**: Removed an invalid leftover `clientDisplayName` assignment from `SettingsDialog.vue`, fixing `vue-tsc` TS2304 / TS2339 build errors
 
 ### v1.7.8 (2026-05-04)
 - **Windsurf new login protocol adaptation**: Windsurf backend updated `WindsurfPostAuth` endpoint to require `X-Devin-Auth1-Token` HTTP header. Added the header in `devin_auth_service.rs::windsurf_post_auth`; all Devin login/registration/multi-org selection flows automatically benefit

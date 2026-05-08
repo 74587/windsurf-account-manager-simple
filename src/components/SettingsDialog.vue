@@ -1013,7 +1013,6 @@ watch(() => uiStore.showSettingsDialog, async (show) => {
   if (show && settingsStore.settings) {
     Object.assign(settings, settingsStore.settings);
     windsurfPath.value = settings.windsurfPath || '';
-    clientDisplayName.value = settings.clientDisplayName || 'Windsurf';
     // 同步座位数选项到输入框
     if (settings.seat_count_options && settings.seat_count_options.length > 0) {
       seatCountOptionsInput.value = settings.seat_count_options.join(', ');
