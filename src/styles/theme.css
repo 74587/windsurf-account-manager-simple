@@ -3415,3 +3415,197 @@ html[data-theme] .account-card .status-inactive .status-text,
 html[data-theme] .account-card .status-subscription-inactive .status-text {
   color: #475569 !important;
 }
+
+html[data-theme] .accounts-grid {
+  contain: layout paint;
+}
+
+html[data-theme] .accounts-grid .account-card {
+  contain: layout paint;
+  content-visibility: auto;
+  contain-intrinsic-size: 360px;
+  box-shadow: 0 6px 16px rgba(15, 23, 42, 0.08) !important;
+  transition: border-color 0.16s ease, background-color 0.16s ease !important;
+}
+
+html[data-theme] .accounts-grid .account-card::before {
+  display: none !important;
+  content: none !important;
+}
+
+html[data-theme] .accounts-grid .account-card:hover {
+  transform: none !important;
+  box-shadow: 0 8px 18px rgba(15, 23, 42, 0.1) !important;
+}
+
+html[data-theme] .accounts-grid .account-card .quota-section,
+html[data-theme] .accounts-grid .account-card .card-actions,
+html[data-theme] .accounts-grid .account-card .status-indicator,
+html[data-theme] .accounts-grid .account-card .el-tag,
+html[data-theme] .accounts-grid .account-card .custom-tag,
+html[data-theme] .accounts-grid .account-card .info-tag,
+html[data-theme] .accounts-grid .account-card .nickname-tag,
+html[data-theme] .accounts-grid .account-card .expiry-badge {
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  box-shadow: none !important;
+}
+
+html[data-theme] .accounts-grid .account-card .el-button.is-circle {
+  box-shadow: none !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  transition: color 0.16s ease, border-color 0.16s ease, background-color 0.16s ease !important;
+}
+
+html[data-theme] .accounts-grid .account-card .el-button.is-circle:hover {
+  transform: none !important;
+  box-shadow: none !important;
+}
+
+html[data-theme] .accounts-grid .account-card .status-dot,
+html[data-theme] .accounts-grid .account-card .status-dot::after,
+html[data-theme] .accounts-grid .account-card .expiry-badge.expiring-soon {
+  animation: none !important;
+}
+
+html[data-theme] .pagination-container .el-pagination {
+  box-shadow: 0 8px 18px color-mix(in srgb, var(--theme-primary) 7%, rgba(15, 23, 42, 0.12)) !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+
+html[data-theme] .pagination-container .el-pagination button,
+html[data-theme] .pagination-container .el-pager li,
+html[data-theme] .pagination-container .el-select__wrapper,
+html[data-theme] .pagination-container .el-input__wrapper {
+  box-shadow: none !important;
+}
+
+html[data-theme] .main-container::before {
+  display: none !important;
+  content: none !important;
+}
+
+html[data-theme] .sidebar,
+html[data-theme] .header,
+html[data-theme] .filter-panel,
+html[data-theme] .pagination-container,
+html[data-theme] .el-dialog,
+html[data-theme] .el-card,
+html[data-theme] .el-drawer,
+html[data-theme] .el-message-box,
+html[data-theme] .el-popper,
+html[data-theme] .el-select-dropdown,
+html[data-theme] .el-dropdown-menu,
+html[data-theme] .el-picker-panel,
+html[data-theme] .el-date-picker,
+html[data-theme] .el-popover.el-popper,
+html[data-theme] .el-alert,
+html[data-theme] .el-notification,
+html[data-theme] .el-message {
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+
+html[data-theme] .sidebar,
+html[data-theme] .header,
+html[data-theme] .filter-panel,
+html[data-theme] .el-dialog,
+html[data-theme] .el-card,
+html[data-theme] .el-drawer,
+html[data-theme] .el-message-box {
+  box-shadow: 0 6px 18px rgba(15, 23, 42, 0.08) !important;
+}
+
+html[data-theme] .el-overlay,
+html[data-theme] .el-input__wrapper,
+html[data-theme] .el-select__wrapper,
+html[data-theme] .el-textarea__inner,
+html[data-theme] .el-input-number .el-input__wrapper {
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+
+html[data-theme] .app-title .el-icon,
+html[data-theme] .sidebar-menu .el-icon,
+html[data-theme] .sidebar-footer .el-icon,
+html[data-theme] .account-card .plan-tag .el-icon,
+html[data-theme] .profile-plan-badge .el-icon {
+  filter: none !important;
+}
+
+html[data-theme] .sidebar-menu .el-menu-item,
+html[data-theme] .sidebar-menu .el-sub-menu__title,
+html[data-theme] .header .el-button.is-circle,
+html[data-theme] .sidebar-footer .el-button.is-circle,
+html[data-theme] .filter-toggle-btn,
+html[data-theme] .theme-trigger {
+  transition: color 0.16s ease, border-color 0.16s ease, background-color 0.16s ease !important;
+}
+
+html[data-theme] .sidebar-menu .el-menu-item:hover,
+html[data-theme] .sidebar-menu .el-sub-menu__title:hover,
+html[data-theme] .sidebar-menu .el-menu-item.is-active,
+html[data-theme] .header .el-button.is-circle:hover,
+html[data-theme] .sidebar-footer .el-button.is-circle:hover,
+html[data-theme] .filter-toggle-btn:hover,
+html[data-theme] .theme-trigger:hover,
+html[data-theme] .theme-option:hover,
+html[data-theme] .theme-option.is-active {
+  transform: none !important;
+  box-shadow: none !important;
+}
+
+html[data-theme] .info-card,
+html[data-theme] .stat-card,
+html[data-theme] .mini-stat-card,
+html[data-theme] .plan-card,
+html[data-theme] .current-plan-info,
+html[data-theme] .usage-section,
+html[data-theme] .cache-info,
+html[data-theme] .empty-state,
+html[data-theme] .raw-data,
+html[data-theme] .raw-response,
+html[data-theme] .billing-period,
+html[data-theme] .limit-item,
+html[data-theme] .detail-value,
+html[data-theme] .domain-list-card,
+html[data-theme] .referral-form-card,
+html[data-theme] .referral-results-card,
+html[data-theme] .member-card,
+html[data-theme] .team-card,
+html[data-theme] .section-card,
+html[data-theme] .form-card,
+html[data-theme] .data-card,
+html[data-theme] .list-card,
+html[data-theme] .panel-card,
+html[data-theme] .content-card,
+html[data-theme] .account-detail-card,
+html[data-theme] .analytics-card,
+html[data-theme] .chart-card,
+html[data-theme] .quota-card,
+html[data-theme] .payment-card,
+html[data-theme] .subscription-card,
+html[data-theme] .operation-card,
+html[data-theme] .log-card,
+html[data-theme] .history-card {
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  box-shadow: 0 6px 16px rgba(15, 23, 42, 0.08) !important;
+}
+
+html[data-theme] .info-card:hover,
+html[data-theme] .stat-card:hover,
+html[data-theme] .mini-stat-card:hover,
+html[data-theme] .plan-card:hover,
+html[data-theme] .bin-list-item:hover,
+html[data-theme] .generated-card-item:hover,
+html[data-theme] .member-card:hover,
+html[data-theme] .team-card:hover,
+html[data-theme] .domain-list-card:hover,
+html[data-theme] .referral-form-card:hover,
+html[data-theme] .referral-results-card:hover {
+  transform: none !important;
+  box-shadow: 0 8px 18px rgba(15, 23, 42, 0.1) !important;
+}

@@ -383,11 +383,11 @@
           </div>
         </transition>
 
-        <div v-if="accountsStore.loading" class="loading-container">
+        <div v-if="accountsStore.loading && accountsStore.paginatedAccounts.length === 0" class="loading-container">
           <el-icon class="is-loading" size="32"><Loading /></el-icon>
         </div>
         
-        <div v-else-if="accountsStore.filteredAccounts.length === 0" class="empty-container">
+        <div v-else-if="!accountsStore.loading && accountsStore.filteredAccounts.length === 0" class="empty-container">
           <el-empty description="暂无账号数据">
             <el-button type="primary" @click="uiStore.openAddAccountDialog">
               添加第一个账号
@@ -395,7 +395,12 @@
           </el-empty>
         </div>
         
-        <div v-else class="accounts-container">
+        <div v-else class="accounts-container" :class="{ 'is-refreshing': accountsStore.loading }">
+          <div v-if="accountsStore.loading" class="accounts-loading-overlay">
+            <el-icon class="is-loading" size="22"><Loading /></el-icon>
+            <span>正在刷新...</span>
+          </div>
+
           <div class="accounts-grid">
             <AccountCard
               v-for="account in accountsStore.paginatedAccounts"
@@ -426,24 +431,27 @@
     </el-container>
 
     <!-- 对话框组件 -->
-    <AddAccountDialog />
-    <EditAccountDialog />
-    <SettingsDialog />
+    <AddAccountDialog v-if="uiStore.showAddAccountDialog" />
+    <EditAccountDialog v-if="uiStore.showEditAccountDialog" />
+    <SettingsDialog v-if="uiStore.showSettingsDialog" />
     <BatchImportDialog 
+      v-if="showBatchImportDialog"
       v-model="showBatchImportDialog" 
       @import="handleBatchImportConfirm" 
       ref="batchImportDialogRef"
     />
     <BatchExportDialog
+      v-if="showBatchExportDialog"
       v-model="showBatchExportDialog"
       :accounts="batchExportAccounts"
     />
-    <LogsDialog />
-    <StatsDialog />
-    <AccountInfoDialog />
+    <LogsDialog v-if="uiStore.showLogsDialog" />
+    <StatsDialog v-if="uiStore.showStatsDialog" />
+    <AccountInfoDialog v-if="uiStore.showAccountInfoDialog" />
     
     <!-- 关于对话框 -->
     <AboutDialog 
+      v-if="showAbout"
       v-model="showAbout"
       :current-email="currentWindsurfEmail"
       :windsurf-version="windsurfVersion"
@@ -452,16 +460,16 @@
     />
 
     <!-- 自动更新对话框 -->
-    <UpdateDialog v-model="showUpdateDialog" :current-version="appVersion" />
+    <UpdateDialog v-if="showUpdateDialog" v-model="showUpdateDialog" :current-version="appVersion" />
 
-    <AutoResetDialog v-model="showAutoResetDialog" />
+    <AutoResetDialog v-if="showAutoResetDialog" v-model="showAutoResetDialog" />
     
     <!-- 虚拟卡生成对话框 -->
-    <CardGeneratorDialog v-model="showCardGeneratorDialog" />
+    <CardGeneratorDialog v-if="showCardGeneratorDialog" v-model="showCardGeneratorDialog" />
     
     <!-- 账单对话框（传入当前查看的账号ID和数据） -->
     <BillingDialog 
-      v-if="uiStore.currentViewingAccountId"
+      v-if="uiStore.showBillingDialog && uiStore.currentViewingAccountId"
       v-model="uiStore.showBillingDialog"
       :account-id="uiStore.currentViewingAccountId"
       :billing-data="currentBillingData"
@@ -471,6 +479,7 @@
     
     <!-- 批量更换订阅对话框 -->
     <BatchUpdatePlanDialog 
+      v-if="showBatchUpdatePlanDialog"
       v-model="showBatchUpdatePlanDialog"
       :selected-account-ids="Array.from(accountsStore.selectedAccounts)"
       :accounts="batchPlanAccounts"
@@ -479,6 +488,7 @@
     
     <!-- 标签管理对话框 -->
     <TagManageDialog 
+      v-if="showTagManageDialog"
       v-model="showTagManageDialog"
       :selected-account-ids="Array.from(accountsStore.selectedAccounts)"
       @refresh="accountsStore.loadAccounts()"
@@ -486,6 +496,7 @@
     
     <!-- 批量更改分组对话框 -->
     <el-dialog
+      v-if="showBatchGroupDialog"
       v-model="showBatchGroupDialog"
       title="批量更改分组"
       width="400px"
@@ -525,6 +536,7 @@
 
     <!-- 批量转让订阅对话框 -->
     <el-dialog
+      v-if="showBatchTransferDialog"
       v-model="showBatchTransferDialog"
       title="批量转让订阅"
       width="600px"
@@ -2642,6 +2654,29 @@ onUnmounted(() => {
 
 .accounts-container {
   width: 100%;
+  position: relative;
+}
+
+.accounts-container.is-refreshing .accounts-grid {
+  opacity: 0.72;
+  pointer-events: none;
+}
+
+.accounts-loading-overlay {
+  position: absolute;
+  top: 10px;
+  right: 12px;
+  z-index: 5;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border-radius: 999px;
+  background: var(--el-bg-color-overlay);
+  border: 1px solid var(--el-border-color-light);
+  box-shadow: 0 6px 16px rgba(15, 23, 42, 0.1);
+  color: var(--el-text-color-secondary);
+  font-size: 13px;
 }
 
 .accounts-grid {

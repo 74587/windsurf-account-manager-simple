@@ -372,18 +372,21 @@
 
   <!-- 积分记录对话框 -->
   <CreditHistoryDialog
+    v-if="showCreditHistoryDialog"
     v-model="showCreditHistoryDialog"
     :account-id="account.id"
   />
 
   <!-- 座位更新结果对话框 -->
   <UpdateSeatsResultDialog
+    v-if="showSeatsResultDialog"
     v-model="showSeatsResultDialog"
     :result-data="seatsResultData"
   />
 
   <!-- 使用分析对话框 -->
   <AnalyticsDialog
+    v-if="showAnalyticsDialog"
     v-model="showAnalyticsDialog"
     :account-id="account.id"
     :account-email="account.email"
@@ -391,24 +394,28 @@
 
   <!-- 团队设置对话框 -->
   <TeamSettingsDialog
+    v-if="showTeamSettingsDialog"
     v-model="showTeamSettingsDialog"
     :account-id="account.id"
   />
 
   <!-- 团队管理对话框 -->
   <TeamManagementDialog
+    v-if="showTeamManagementDialog"
     v-model="showTeamManagementDialog"
     :account-id="account.id"
   />
 
   <!-- 自动充值设置对话框 -->
   <AutoRefillDialog
+    v-if="showAutoRefillDialog"
     v-model="showAutoRefillDialog"
     :account-id="account.id"
   />
 
   <!-- 更换订阅对话框 -->
   <UpdatePlanDialog
+    v-if="showUpdatePlanDialog"
     v-model="showUpdatePlanDialog"
     :account-id="account.id"
     :account="account"
@@ -417,6 +424,7 @@
 
   <!-- Turnstile 验证对话框 -->
   <TurnstileDialog
+    v-if="showTurnstileDialog"
     :visible="showTurnstileDialog"
     @update:visible="showTurnstileDialog = $event"
     @success="handleTurnstileSuccess"
@@ -426,6 +434,7 @@
   <!-- 切号进度弹窗（独立居中 Dialog） -->
   <!-- 运行中禁止通过遮罩 / Esc 关闭，强制用户看到全流程；成功/失败时允许关闭 -->
   <el-dialog
+    v-if="switchProgress.visible"
     v-model="switchProgress.visible"
     :title="`切换到 ${switchProgress.accountName}`"
     width="460px"
