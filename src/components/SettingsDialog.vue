@@ -748,7 +748,7 @@ const settings = reactive<{
   auto_refresh_token: true,
   seat_count_options: [18, 19, 20],
   retry_times: 2,
-  theme: 'aurora',
+  theme: 'original-light',
   concurrent_limit: 5,
   show_seats_result_dialog: false,  // 默认关闭
   autoOpenPaymentLinkInWebview: false,  // 默认关闭自动打开支付页面

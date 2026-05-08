@@ -1,17 +1,17 @@
 <template>
   <el-container class="main-container">
     <!-- 侧边栏 -->
-    <el-aside :width="sidebarWidth" class="sidebar" :style="{ overflow: 'hidden' }">
+    <el-aside :width="sidebarWidth" class="sidebar" :class="{ 'is-collapsed': uiStore.sidebarCollapsed }" :style="{ overflow: 'hidden' }">
       <div class="app-title">
         <el-icon size="24"><Connection /></el-icon>
-        <div v-if="!uiStore.sidebarCollapsed" class="app-title-text">
+        <div class="app-title-text" :aria-hidden="uiStore.sidebarCollapsed">
           <span>Windsurf Manager</span>
           <span class="version-text">v{{ appVersion }}</span>
         </div>
       </div>
       
       <el-menu
-        :collapse="uiStore.sidebarCollapsed"
+        :collapse="menuCollapsed"
         :default-active="activeMenu"
         :default-openeds="[]"
         class="sidebar-menu"
@@ -90,7 +90,7 @@
         <el-button 
           :icon="uiStore.sidebarCollapsed ? ArrowRight : ArrowLeft"
           circle
-          @click="uiStore.toggleSidebar"
+          @click="toggleSidebar"
         />
       </div>
     </el-aside>
@@ -98,7 +98,7 @@
     <!-- 主内容区 -->
     <el-container>
       <!-- 顶部操作栏 -->
-      <el-header class="header">
+      <el-header class="header" :class="{ 'has-selected-actions': accountsStore.selectedAccounts.size > 0 }">
         <div class="header-left">
           <el-input
             v-model="searchQuery"
@@ -667,6 +667,10 @@ const accountsStore = useAccountsStore();
 const settingsStore = useSettingsStore();
 const uiStore = useUIStore();
 
+const SIDEBAR_MENU_EXPAND_DELAY_MS = 140;
+const menuCollapsed = ref(uiStore.sidebarCollapsed);
+let sidebarMenuTimer: ReturnType<typeof setTimeout> | undefined;
+
 const activeMenu = ref('accounts');
 const searchQuery = ref('');
 const currentBillingData = ref<any>(null);
@@ -842,6 +846,46 @@ const hasActiveFilter = computed(() => {
 });
 
 const sidebarWidth = computed(() => uiStore.sidebarCollapsed ? '64px' : '240px');
+
+function clearSidebarMenuTimer() {
+  if (sidebarMenuTimer !== undefined) {
+    clearTimeout(sidebarMenuTimer);
+    sidebarMenuTimer = undefined;
+  }
+}
+
+function scheduleMenuExpand() {
+  clearSidebarMenuTimer();
+  sidebarMenuTimer = setTimeout(() => {
+    if (!uiStore.sidebarCollapsed) {
+      menuCollapsed.value = false;
+    }
+    sidebarMenuTimer = undefined;
+  }, SIDEBAR_MENU_EXPAND_DELAY_MS);
+}
+
+function toggleSidebar() {
+  if (uiStore.sidebarCollapsed) {
+    uiStore.toggleSidebar();
+    scheduleMenuExpand();
+    return;
+  }
+
+  menuCollapsed.value = true;
+  requestAnimationFrame(() => {
+    uiStore.toggleSidebar();
+  });
+}
+
+watch(() => uiStore.sidebarCollapsed, (collapsed) => {
+  if (collapsed) {
+    clearSidebarMenuTimer();
+    menuCollapsed.value = true;
+    return;
+  }
+
+  scheduleMenuExpand();
+});
 
 // 全选状态：在分组视图中用该分组账号数判断，无分组时用总数
 const isAllSelected = computed(() => {
@@ -2072,6 +2116,7 @@ onMounted(async () => {
 
 // 组件卸载时清除自动重置定时器
 onUnmounted(() => {
+  clearSidebarMenuTimer();
   autoResetTimerMap.value.forEach(timer => clearInterval(timer));
   autoResetTimerMap.value.clear();
 });
@@ -2088,8 +2133,12 @@ onUnmounted(() => {
   border-right: 1px solid #e4e7ed;
   display: flex;
   flex-direction: column;
-  transition: width 0.3s;
+  transition: width 0.22s cubic-bezier(0.2, 0, 0.2, 1);
   overflow: hidden;
+  contain: layout paint style;
+  isolation: isolate;
+  will-change: width;
+  transform: translateZ(0);
 }
 
 /* 全局隐藏侧边栏的所有滚动条 */
@@ -2125,6 +2174,9 @@ onUnmounted(() => {
   font-weight: 600;
   white-space: nowrap;
   overflow: hidden;
+  min-height: 64px;
+  position: relative;
+  transition: padding 0.22s cubic-bezier(0.2, 0, 0.2, 1);
   
   .el-icon {
     flex-shrink: 0;
@@ -2149,10 +2201,33 @@ onUnmounted(() => {
   padding: 16px 8px;
 }
 
+.sidebar.is-collapsed .app-title {
+  padding: 16px 8px;
+  justify-content: center;
+}
+
+.app-title-text {
+  position: absolute;
+  top: 50%;
+  left: 48px;
+  right: 12px;
+  opacity: 1;
+  transform: translate3d(0, -50%, 0);
+  transition: opacity 0.14s ease, transform 0.18s cubic-bezier(0.2, 0, 0.2, 1);
+  will-change: opacity, transform;
+  pointer-events: none;
+}
+
+.sidebar.is-collapsed .app-title-text {
+  opacity: 0;
+  transform: translate3d(-8px, -50%, 0);
+}
+
 .sidebar-menu {
   flex: 1;
   border-right: none;
   overflow: hidden !important;
+  contain: layout paint;
 }
 
 /* 隐藏Element Plus菜单的滚动条 */
@@ -2180,8 +2255,11 @@ onUnmounted(() => {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0 28px;
+  flex-wrap: nowrap;
+  gap: 8px;
+  padding: 0 20px;
   height: 64px;
+  min-height: 64px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.03);
   position: relative;
   z-index: 10;
@@ -2191,7 +2269,8 @@ onUnmounted(() => {
   display: flex;
   align-items: center;
   gap: 6px;
-  flex-shrink: 0;
+  flex: 0 1 auto;
+  min-width: 0;
 }
 
 .search-input {
@@ -2241,7 +2320,44 @@ onUnmounted(() => {
   display: flex;
   gap: 2px;
   align-items: center;
+  justify-content: flex-end;
   flex-wrap: nowrap;
+  flex: 1 1 360px;
+  min-width: 0;
+}
+
+.header.has-selected-actions {
+  gap: 6px;
+  padding: 0 14px;
+}
+
+.header.has-selected-actions .search-input {
+  width: 180px;
+}
+
+.header.has-selected-actions .sort-select {
+  width: 96px;
+}
+
+.header.has-selected-actions .header-right {
+  gap: clamp(6px, 0.8vw, 12px);
+}
+
+.header.has-selected-actions .header-right :deep(.el-button.is-circle),
+.header.has-selected-actions .header-right :deep(.theme-trigger) {
+  width: 34px;
+  height: 34px;
+  min-width: 34px;
+}
+
+.header.has-selected-actions .header-right :deep(.el-button .el-icon),
+.header.has-selected-actions .header-right :deep(.theme-trigger .el-icon) {
+  font-size: 16px;
+}
+
+.header-right :deep(.el-button.is-circle),
+.header-right :deep(.theme-trigger) {
+  margin: 0;
 }
 
 /* 圆形按钮徒加徽章样式 */
@@ -2403,6 +2519,7 @@ onUnmounted(() => {
   transition: all 0.3s ease;
   width: 40px;
   height: 40px;
+  flex: 0 0 auto;
 }
 
 /* 默认圆形按钮 - 统一的灰色风格 */
@@ -2681,7 +2798,7 @@ onUnmounted(() => {
 
 .accounts-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(290px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 320px), 1fr));
   gap: 8px;
   width: 100%;
   padding: 0;
@@ -2690,11 +2807,40 @@ onUnmounted(() => {
 /* 响应式布局 */
 @media (max-width: 1400px) {
   .accounts-grid {
-    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 300px), 1fr));
   }
 }
 
 @media (max-width: 1024px) {
+  .header {
+    gap: 6px;
+    padding: 0 12px;
+  }
+
+  .header.has-selected-actions {
+    gap: 4px;
+    padding: 0 8px;
+  }
+
+  .header.has-selected-actions .header-left {
+    gap: 4px;
+  }
+
+  .header.has-selected-actions .search-input {
+    width: 140px;
+  }
+
+  .header.has-selected-actions .sort-select {
+    width: 82px;
+  }
+
+  .header.has-selected-actions .header-right :deep(.el-button.is-circle),
+  .header.has-selected-actions .header-right :deep(.theme-trigger) {
+    width: 30px;
+    height: 30px;
+    min-width: 30px;
+  }
+
   .main-content {
     padding: 10px 6px;
   }
@@ -2709,8 +2855,29 @@ onUnmounted(() => {
     grid-template-columns: 1fr;
   }
   
-  .header-left {
-    max-width: 200px;
+  .header {
+    padding: 0 6px;
+    gap: 4px;
+  }
+
+  .header.has-selected-actions .search-input {
+    width: 120px;
+  }
+
+  .header.has-selected-actions .sort-select {
+    width: 74px;
+  }
+
+  .header.has-selected-actions .header-right :deep(.el-button.is-circle),
+  .header.has-selected-actions .header-right :deep(.theme-trigger) {
+    width: 28px;
+    height: 28px;
+    min-width: 28px;
+  }
+
+  .header.has-selected-actions .header-right :deep(.el-button .el-icon),
+  .header.has-selected-actions .header-right :deep(.theme-trigger .el-icon) {
+    font-size: 14px;
   }
   
   .main-content {
