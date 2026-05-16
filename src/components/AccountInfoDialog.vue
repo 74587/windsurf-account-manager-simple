@@ -5,6 +5,7 @@
     width="1000px"
     class="account-info-dialog"
     :close-on-click-modal="false"
+    append-to-body
     @close="handleClose"
   >
     <div v-if="loading" class="loading-container">
@@ -2077,8 +2078,6 @@ function getPermissionCount(permissions: any): number {
   border-radius: 12px;
   padding: 16px;
   transition: all 0.3s ease;
-  min-width: 0;
-  overflow: hidden;
   
   &:hover {
     border-color: #c0c4cc;
@@ -2954,7 +2953,7 @@ function getPermissionCount(permissions: any): number {
 /* 主布局：基础信息 + 订阅套餐 */
 .main-info-layout {
   display: grid;
-  grid-template-columns: 1fr 340px;
+  grid-template-columns: 1fr 400px;
   gap: 16px;
   margin-bottom: 16px;
   
@@ -3041,7 +3040,6 @@ function getPermissionCount(permissions: any): number {
 .plan-limits-table {
   width: 100%;
   border-collapse: collapse;
-  table-layout: fixed;
   margin-top: 12px;
   border-top: 1px solid #f0f2f5;
   
@@ -3054,14 +3052,12 @@ function getPermissionCount(permissions: any): number {
     padding: 10px 8px;
     font-size: 12px;
     vertical-align: middle;
-    word-break: break-all;
-    overflow: hidden;
   }
   
   .label-cell {
     color: #909399;
     white-space: nowrap;
-    width: 60px;
+    width: 70px;
   }
   
   .value-cell {
