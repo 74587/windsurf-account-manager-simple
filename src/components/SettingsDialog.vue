@@ -139,6 +139,15 @@
               当遇到连续的API请求失败时，可点击此按钮重置网络连接池
             </div>
           </el-form-item>
+          
+          <el-divider content-position="left">界面设置</el-divider>
+          
+          <el-form-item label="账号备注字段">
+            <el-switch v-model="settings.enableNicknameField" />
+            <span style="margin-left: 10px; color: #909399; font-size: 12px;">
+              开启后，添加/编辑账号时显示"备注名称"输入框，卡片上显示备注标签；关闭时已有备注数据保留但不显示
+            </span>
+          </el-form-item>
         </el-form>
       </el-tab-pane>
       
@@ -523,46 +532,6 @@
             </template>
           </el-alert>
           
-          <el-divider content-position="left">Windsurf 伟哥</el-divider>
-          
-          <el-form-item label="启用伟哥功能">
-            <el-switch 
-              v-model="settings.cunzhiEnabled"
-              active-text="开启"
-              inactive-text="关闭"
-              :loading="cunzhiLoading"
-              @change="handleCunzhiSwitch"
-            />
-          </el-form-item>
-          
-          <el-form-item label="寸止状态">
-            <el-tag v-if="cunzhiStatus.installed" type="success">已安装</el-tag>
-            <el-tag v-else-if="cunzhiStatus.error" type="danger">{{ cunzhiStatus.error }}</el-tag>
-            <el-tag v-else type="info">未安装</el-tag>
-            <el-button 
-              v-if="cunzhiStatus.installed" 
-              size="small" 
-              style="margin-left: 10px;"
-              @click="checkCunzhiStatus"
-            >
-              重新检测
-            </el-button>
-          </el-form-item>
-          
-          <el-alert
-            title="伟哥功能说明"
-            type="success"
-            :closable="false"
-            show-icon
-            style="margin-top: 10px;"
-          >
-            <template #default>
-              <div style="font-size: 12px; line-height: 1.6;">
-                <p>💊 伟哥功能：防止 AI 擅自结束对话，让你掌控对话节奏</p>
-                <p>⚠️ 注意：开启/关闭后需要重启 Windsurf 生效</p>
-              </div>
-            </template>
-          </el-alert>
         </el-form>
       </el-tab-pane>
       
@@ -740,10 +709,10 @@ const settings = reactive<{
   startTrial: boolean;
   teamName: string;
   seatCount: number;
-  cunzhiEnabled: boolean;
   autoBackupEnabled: boolean;
   backupInterval: number;
   backupMaxCount: number;
+  enableNicknameField: boolean;
 }>({
   auto_refresh_token: true,
   seat_count_options: [18, 19, 20],
@@ -777,10 +746,10 @@ const settings = reactive<{
   startTrial: true,  // 默认开启试用
   teamName: '',  // 默认空团队名称
   seatCount: 1,  // 默认1个席位
-  cunzhiEnabled: false,  // 默认关闭伟哥功能
   autoBackupEnabled: true,  // 默认启用自动备份
   backupInterval: 10,  // 默认10分钟
   backupMaxCount: 10,  // 默认最多10份
+  enableNicknameField: false,  // 默认关闭备注名称字段
 });
 
 // 备份相关
@@ -1002,13 +971,6 @@ const patchSummary = computed<{ type: 'success' | 'info' | 'warning' | 'danger';
   return { type: 'warning', label: `第三方补丁 ${patchAppliedCount.value}/3` };
 });
 
-// 伟哥(寸止)相关
-const cunzhiLoading = ref(false);
-const cunzhiStatus = reactive({
-  installed: false,
-  error: '',
-});
-
 watch(() => uiStore.showSettingsDialog, async (show) => {
   if (show && settingsStore.settings) {
     Object.assign(settings, settingsStore.settings);
@@ -1021,8 +983,6 @@ watch(() => uiStore.showSettingsDialog, async (show) => {
     if (windsurfPath.value) {
       await checkPatchStatus();
     }
-    // 检查伟哥状态
-    await checkCunzhiStatus();
     // 加载成功BIN池数量和测试模式进度
     await loadSuccessBinCount();
     await loadTestModeProgress();
@@ -1335,78 +1295,6 @@ async function handleResetHttpClient() {
     ElMessage.error(`重置失败: ${error}`);
   } finally {
     resettingHttp.value = false;
-  }
-}
-
-// 检查伟哥(寸止)状态
-async function checkCunzhiStatus() {
-  try {
-    const status = await invoke<any>('check_cunzhi_status');
-    cunzhiStatus.installed = status.installed;
-    cunzhiStatus.error = status.error || '';
-    
-    // 同步开关状态与实际状态
-    if (status.installed !== settings.cunzhiEnabled) {
-      settings.cunzhiEnabled = status.installed;
-      await settingsStore.updateSettings(settings);
-    }
-  } catch (error) {
-    cunzhiStatus.installed = false;
-    cunzhiStatus.error = error as string;
-  }
-}
-
-// 处理伟哥开关
-async function handleCunzhiSwitch(value: boolean) {
-  const action = value ? '开启' : '关闭';
-  const message = value 
-    ? '开启伟哥功能将安装 MCP 服务器和全局规则，是否继续？'
-    : '关闭伟哥功能将删除 MCP 配置和全局规则，是否继续？';
-  
-  try {
-    await ElMessageBox.confirm(
-      message,
-      `${action}伟哥功能`,
-      {
-        confirmButtonText: '确定',
-        cancelButtonText: '取消',
-        type: 'warning',
-      }
-    );
-  } catch {
-    // 用户取消，恢复开关状态
-    settings.cunzhiEnabled = !value;
-    return;
-  }
-  
-  cunzhiLoading.value = true;
-  try {
-    let result;
-    if (value) {
-      // 安装伟哥
-      result = await invoke<any>('install_cunzhi', { windsurfPath: settings.windsurfPath || null });
-    } else {
-      // 卸载伟哥
-      result = await invoke<any>('uninstall_cunzhi', { windsurfPath: settings.windsurfPath || null });
-    }
-    
-    if (result.success) {
-      ElMessage.success(result.message || `伟哥功能已${action}`);
-      // 更新状态
-      await checkCunzhiStatus();
-      // 保存设置
-      await settingsStore.updateSettings(settings);
-      // 提示重启
-      ElMessage.warning('请重启 Windsurf 以使更改生效');
-    } else {
-      ElMessage.error(result.message || `${action}失败`);
-      settings.cunzhiEnabled = !value;
-    }
-  } catch (error) {
-    ElMessage.error(`${action}失败: ${error}`);
-    settings.cunzhiEnabled = !value;
-  } finally {
-    cunzhiLoading.value = false;
   }
 }
 

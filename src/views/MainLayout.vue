@@ -70,11 +70,6 @@
           <template #title>自动重置</template>
         </el-menu-item>
         
-        <el-menu-item index="card-generator" @click="showCardGeneratorDialog = true">
-          <el-icon><CreditCard /></el-icon>
-          <template #title>虚拟卡生成</template>
-        </el-menu-item>
-        
         <el-menu-item index="about" @click="showAboutDialog">
           <el-icon><InfoFilled /></el-icon>
           <template #title>关于</template>
@@ -108,15 +103,14 @@
             class="search-input"
             @input="handleSearch"
           />
-          <el-tooltip content="高级筛选" placement="bottom">
-            <el-button
-              :icon="Filter"
-              circle
-              :type="hasActiveFilter ? 'primary' : 'default'"
-              @click="showFilterPanel = !showFilterPanel"
-              class="filter-toggle-btn"
-            />
-          </el-tooltip>
+          <el-button
+            v-tooltip.bottom="'高级筛选'"
+            :icon="Filter"
+            circle
+            :type="hasActiveFilter ? 'primary' : 'default'"
+            @click="showFilterPanel = !showFilterPanel"
+            class="filter-toggle-btn"
+          />
           
           <!-- 排序选择器 -->
           <el-select
@@ -136,159 +130,157 @@
             <el-option label="日配额剩余%" value="daily_quota_remaining" />
             <el-option label="周配额剩余%" value="weekly_quota_remaining" />
           </el-select>
-          <el-tooltip :content="sortDirection === 'asc' ? '升序' : '降序'" placement="bottom">
-            <el-button
-              :icon="sortDirection === 'asc' ? SortUp : SortDown"
-              circle
-              @click="toggleSortDirection"
-            />
-          </el-tooltip>
+          <el-button
+            v-tooltip.bottom="sortDirection === 'asc' ? '升序' : '降序'"
+            :icon="sortDirection === 'asc' ? SortUp : SortDown"
+            circle
+            @click="toggleSortDirection"
+          />
         </div>
         
         <div class="header-right">
-          <el-tooltip content="主题配色" placement="bottom">
-            <ThemeSelector v-model="uiStore.theme" @change="uiStore.setTheme" />
-          </el-tooltip>
+          <ThemeSelector
+            v-tooltip.bottom="'主题配色'"
+            v-model="uiStore.theme"
+            @change="uiStore.setTheme"
+          />
 
           <!-- 批量删除 -->
-          <el-tooltip content="批量删除" placement="bottom" v-if="accountsStore.selectedAccounts.size > 0">
-            <el-badge :value="accountsStore.selectedAccounts.size" :offset="[12, -8]">
-              <el-button
-                type="danger"
-                :icon="Delete"
-                circle
-                @click="handleBatchDelete"
-              />
-            </el-badge>
-          </el-tooltip>
-          
-          <el-tooltip content="批量转让订阅" placement="bottom" v-if="accountsStore.selectedAccounts.size > 0">
+          <el-badge
+            v-if="accountsStore.selectedAccounts.size > 0"
+            v-tooltip.bottom="'批量删除'"
+            :value="accountsStore.selectedAccounts.size"
+            :offset="[12, -8]"
+          >
             <el-button
-              type="success"
-              :icon="Switch"
+              type="danger"
+              :icon="Delete"
               circle
-              @click="showBatchTransferDialog = true"
+              @click="handleBatchDelete"
             />
-          </el-tooltip>
+          </el-badge>
+          
+          <el-button
+            v-if="accountsStore.selectedAccounts.size > 0"
+            v-tooltip.bottom="'批量转让订阅'"
+            type="success"
+            :icon="Switch"
+            circle
+            @click="showBatchTransferDialog = true"
+          />
           
           <!-- 批量刷新状态 -->
-          <el-tooltip content="批量刷新状态" placement="bottom" v-if="accountsStore.selectedAccounts.size > 0">
-            <el-button
-              type="warning"
-              :icon="RefreshRight"
-              circle
-              @click="handleBatchRefresh"
-            />
-          </el-tooltip>
+          <el-button
+            v-if="accountsStore.selectedAccounts.size > 0"
+            v-tooltip.bottom="'批量刷新状态'"
+            type="warning"
+            :icon="RefreshRight"
+            circle
+            @click="handleBatchRefresh"
+          />
           
-          <el-tooltip content="批量更换订阅" placement="bottom" v-if="accountsStore.selectedAccounts.size > 0">
-            <el-button
-              type="primary"
-              :icon="Trophy"
-              circle
-              @click="openBatchUpdatePlanDialog"
-            />
-          </el-tooltip>
+          <el-button
+            v-if="accountsStore.selectedAccounts.size > 0"
+            v-tooltip.bottom="'批量更换订阅'"
+            type="primary"
+            :icon="Trophy"
+            circle
+            @click="openBatchUpdatePlanDialog"
+          />
           
           <!-- 导出选中账号 -->
-          <el-tooltip content="导出选中账号" placement="bottom" v-if="accountsStore.selectedAccounts.size > 0">
-            <el-button
-              type="info"
-              :icon="Download"
-              circle
-              @click="handleExportAccounts(true)"
-            />
-          </el-tooltip>
+          <el-button
+            v-if="accountsStore.selectedAccounts.size > 0"
+            v-tooltip.bottom="'导出选中账号'"
+            type="info"
+            :icon="Download"
+            circle
+            @click="handleExportAccounts(true)"
+          />
           
           <!-- 批量更改分组 -->
-          <el-tooltip content="批量更改分组" placement="bottom" v-if="accountsStore.selectedAccounts.size > 0">
-            <el-button
-              type="primary"
-              :icon="FolderOpened"
-              circle
-              @click="showBatchGroupDialog = true"
-            />
-          </el-tooltip>
+          <el-button
+            v-if="accountsStore.selectedAccounts.size > 0"
+            v-tooltip.bottom="'批量更改分组'"
+            type="primary"
+            :icon="FolderOpened"
+            circle
+            @click="showBatchGroupDialog = true"
+          />
           
           <!-- 取消已选 -->
-          <el-tooltip content="取消已选" placement="bottom" v-if="accountsStore.selectedAccounts.size > 0">
-            <el-button
-              :icon="Close"
-              circle
-              style="background-color: #909399; border-color: #909399; color: white;"
-              @click="accountsStore.clearSelection()"
-            />
-          </el-tooltip>
+          <el-button
+            v-if="accountsStore.selectedAccounts.size > 0"
+            v-tooltip.bottom="'取消已选'"
+            :icon="Close"
+            circle
+            style="background-color: #909399; border-color: #909399; color: white;"
+            @click="accountsStore.clearSelection()"
+          />
           
           <!-- 选择本页账号 -->
-          <el-tooltip content="选择本页账号" placement="bottom">
-            <el-button
-              :icon="DocumentChecked"
-              circle
-              type="default"
-              @click="selectCurrentPageAccounts"
-            />
-          </el-tooltip>
+          <el-button
+            v-tooltip.bottom="'选择本页账号'"
+            :icon="DocumentChecked"
+            circle
+            type="default"
+            @click="selectCurrentPageAccounts"
+          />
           
           <!-- 全选按钮（带分隔线） -->
-          <el-tooltip content="全选" placement="bottom" class="select-all-button">
-            <el-button
-              :icon="Select"
-              circle
-              :type="isAllSelected ? 'primary' : 'default'"
-              @click="toggleSelectAll"
-            />
-          </el-tooltip>
+          <el-button
+            v-tooltip.bottom="'全选'"
+            class="select-all-button"
+            :icon="Select"
+            circle
+            :type="isAllSelected ? 'primary' : 'default'"
+            @click="toggleSelectAll"
+          />
           
           <!-- 添加账号 -->
-          <el-tooltip content="添加账号" placement="bottom">
-            <el-button 
-              type="default" 
-              :icon="Plus" 
-              circle 
-              @click="uiStore.openAddAccountDialog" 
-            />
-          </el-tooltip>
+          <el-button
+            v-tooltip.bottom="'添加账号'"
+            type="default"
+            :icon="Plus"
+            circle
+            @click="uiStore.openAddAccountDialog"
+          />
           
           <!-- 批量添加 -->
-          <el-tooltip content="批量导入" placement="bottom">
-            <el-button 
-              type="default" 
-              :icon="Upload"
-              circle 
-              @click="handleBatchImport"
-            />
-          </el-tooltip>
+          <el-button
+            v-tooltip.bottom="'批量导入'"
+            type="default"
+            :icon="Upload"
+            circle
+            @click="handleBatchImport"
+          />
           
-          <!-- 导出账号 -->
-          <el-tooltip content="导出账号" placement="bottom">
-            <el-button 
-              :icon="Download"
-              circle 
-              type="default"
-              @click="handleExportAccounts"
-            />
-          </el-tooltip>
+          <!-- 导出账号（包一层 lambda：handleExportAccounts(selectedOnly?: boolean) 签名与 MouseEvent 不兼容） -->
+          <el-button
+            v-tooltip.bottom="'导出账号'"
+            :icon="Download"
+            circle
+            type="default"
+            @click="() => handleExportAccounts()"
+          />
           
           <!-- 标签管理 -->
-          <el-tooltip content="标签管理" placement="bottom">
-            <el-button 
-              :icon="PriceTag"
-              circle 
-              type="default"
-              @click="showTagManageDialog = true"
-            />
-          </el-tooltip>
+          <el-button
+            v-tooltip.bottom="'标签管理'"
+            :icon="PriceTag"
+            circle
+            type="default"
+            @click="showTagManageDialog = true"
+          />
           
           <!-- 全局刷新 -->
-          <el-tooltip content="刷新全部" placement="bottom">
-            <el-button 
-              :icon="RefreshRight" 
-              circle 
-              type="default"
-              @click="refreshAccounts" 
-            />
-          </el-tooltip>
+          <el-button
+            v-tooltip.bottom="'刷新全部'"
+            :icon="RefreshRight"
+            circle
+            type="default"
+            @click="refreshAccounts"
+          />
         </div>
       </el-header>
 
@@ -395,29 +387,48 @@
           </el-empty>
         </div>
         
-        <div v-else class="accounts-container" :class="{ 'is-refreshing': accountsStore.loading }">
+        <div
+          v-else
+          ref="accountsContainerRef"
+          class="accounts-container"
+          :class="{ 'is-refreshing': accountsStore.loading }"
+        >
           <div v-if="accountsStore.loading" class="accounts-loading-overlay">
             <el-icon class="is-loading" size="22"><Loading /></el-icon>
             <span>正在刷新...</span>
           </div>
 
-          <div class="accounts-grid">
-            <AccountCard
-              v-for="account in renderedAccounts"
-              :key="account.id"
-              :account="account"
-              :is-selected="accountsStore.selectedAccounts.has(account.id)"
-              :current-email="currentWindsurfEmail"
-              @select="handleAccountSelect(account.id, $event)"
-              @update="handleAccountUpdate"
-            />
-          </div>
+          <!-- B5: 虚拟滚动 - 仅渲染视口内 + buffer 的卡片，pageSize=100 时也只 mount ~10 张 -->
+          <DynamicScroller
+            :items="accountRows"
+            :min-item-size="ROW_MIN_HEIGHT"
+            key-field="rowKey"
+            :buffer="600"
+            class="accounts-virtual-scroller"
+          >
+            <template #default="{ item, active, index }: { item: AccountRow; active: boolean; index: number }">
+              <DynamicScrollerItem
+                :item="item"
+                :active="active"
+                :data-index="index"
+                :size-dependencies="item.heightDeps"
+              >
+                <div class="account-row" :style="rowGridStyle">
+                  <AccountCard
+                    v-for="account in item.accounts"
+                    :key="account.id"
+                    :account="account"
+                    :is-selected="accountsStore.selectedAccounts.has(account.id)"
+                    :current-email="currentWindsurfEmail"
+                    @select="handleAccountSelect(account.id, $event)"
+                    @update="handleAccountUpdate"
+                  />
+                </div>
+              </DynamicScrollerItem>
+            </template>
+          </DynamicScroller>
 
-          <div v-if="isRenderingAccountBatch" class="account-rendering-hint">
-            正在渲染更多账号...
-          </div>
-          
-          <!-- 分页组件 -->
+          <!-- 分页组件（在虚拟滚动容器之外，始终可见） -->
           <div class="pagination-container" v-if="accountsStore.totalCount > accountsStore.pagination.pageSize">
             <el-pagination
               :current-page="accountsStore.pagination.currentPage"
@@ -467,9 +478,6 @@
     <UpdateDialog v-if="showUpdateDialog" v-model="showUpdateDialog" :current-version="appVersion" />
 
     <AutoResetDialog v-if="showAutoResetDialog" v-model="showAutoResetDialog" />
-    
-    <!-- 虚拟卡生成对话框 -->
-    <CardGeneratorDialog v-if="showCardGeneratorDialog" v-model="showCardGeneratorDialog" />
     
     <!-- 账单对话框（传入当前查看的账号ID和数据） -->
     <BillingDialog 
@@ -608,11 +616,62 @@
         </el-button>
       </template>
     </el-dialog>
+
+    <!-- ==================== A2: AccountCard 共享弹窗（单实例 + 异步加载） ==================== -->
+    <!-- 原 AccountCard 内嵌 8 个 v-if Dialog（一页 20 卡片 = 160 节点），现统一由 uiStore.cardDialog 驱动 -->
+    <template v-if="uiStore.cardDialog.account">
+      <CardCreditHistoryDialog
+        v-if="uiStore.cardDialog.type === 'creditHistory'"
+        :model-value="true"
+        @update:model-value="(v: boolean) => !v && uiStore.closeCardDialog()"
+        :account-id="uiStore.cardDialog.account.id"
+      />
+      <CardAnalyticsDialog
+        v-else-if="uiStore.cardDialog.type === 'analytics'"
+        :model-value="true"
+        @update:model-value="(v: boolean) => !v && uiStore.closeCardDialog()"
+        :account-id="uiStore.cardDialog.account.id"
+        :account-email="uiStore.cardDialog.account.email"
+      />
+      <CardTeamSettingsDialog
+        v-else-if="uiStore.cardDialog.type === 'teamSettings'"
+        :model-value="true"
+        @update:model-value="(v: boolean) => !v && uiStore.closeCardDialog()"
+        :account-id="uiStore.cardDialog.account.id"
+      />
+      <CardTeamManagementDialog
+        v-else-if="uiStore.cardDialog.type === 'teamManagement'"
+        :model-value="true"
+        @update:model-value="(v: boolean) => !v && uiStore.closeCardDialog()"
+        :account-id="uiStore.cardDialog.account.id"
+      />
+      <CardAutoRefillDialog
+        v-else-if="uiStore.cardDialog.type === 'autoRefill'"
+        :model-value="true"
+        @update:model-value="(v: boolean) => !v && uiStore.closeCardDialog()"
+        :account-id="uiStore.cardDialog.account.id"
+      />
+      <CardUpdatePlanDialog
+        v-else-if="uiStore.cardDialog.type === 'updatePlan'"
+        :model-value="true"
+        @update:model-value="(v: boolean) => !v && uiStore.closeCardDialog()"
+        :account-id="uiStore.cardDialog.account.id"
+        :account="uiStore.cardDialog.account"
+        @success="() => uiStore.emitCardDialogSuccess()"
+      />
+      <CardTurnstileDialog
+        v-else-if="uiStore.cardDialog.type === 'turnstile'"
+        :visible="true"
+        @update:visible="(v: boolean) => !v && uiStore.closeCardDialog()"
+        @success="(token: string) => uiStore.emitCardDialogSuccess(token)"
+        @cancel="() => uiStore.closeCardDialog()"
+      />
+    </template>
   </el-container>
 </template>
 
 <script setup lang="ts">
-import { ref, computed, watch, onMounted, onUnmounted } from 'vue';
+import { ref, computed, watch, onMounted, onUnmounted, defineAsyncComponent } from 'vue';
 import { ElMessage, ElMessageBox } from 'element-plus';
 import { invoke } from '@tauri-apps/api/core';
 import {
@@ -649,34 +708,105 @@ import { useAccountsStore, useSettingsStore, useUIStore } from '@/store';
 import { apiService, settingsApi, accountApi, devinApi } from '@/api';
 import type { Account } from '@/types';
 import AccountCard from '@/components/AccountCard.vue';
-import AddAccountDialog from '@/components/AddAccountDialog.vue';
-import EditAccountDialog from '@/components/EditAccountDialog.vue';
-import SettingsDialog from '@/components/SettingsDialog.vue';
-import BatchImportDialog from '@/components/BatchImportDialog.vue';
-import BatchExportDialog from '@/components/BatchExportDialog.vue';
-import LogsDialog from '@/components/LogsDialog.vue';
-import StatsDialog from '@/components/StatsDialog.vue';
-import BillingDialog from '@/components/BillingDialog.vue';
-import AccountInfoDialog from '@/components/AccountInfoDialog.vue';
-import AboutDialog from '@/components/AboutDialog.vue';
-import UpdateDialog from '@/components/UpdateDialog.vue';
+// B5: vue-virtual-scroller 虚拟滚动（动态高度）
+// DynamicScroller 处理可变高度 items，仅渲染视口内 + buffer 范围
+import { DynamicScroller, DynamicScrollerItem } from 'vue-virtual-scroller';
+// 只保留确实首屏需要的同步组件
 import { useUpdaterStore } from '@/store/modules/updater';
-import BatchUpdatePlanDialog from '@/components/BatchUpdatePlanDialog.vue';
-import TagManageDialog from '@/components/TagManageDialog.vue';
-import AutoResetDialog from '@/components/AutoResetDialog.vue';
-import CardGeneratorDialog from '@/components/CardGeneratorDialog.vue';
 import ThemeSelector from '@/components/ThemeSelector.vue';
+
+// ==================== B2: MainLayout 所有 Dialog 改为 defineAsyncComponent ====================
+// 这些 Dialog 均通过 v-if 控制显示（默认 false），首次打开时才下载对应 chunk
+// 改造前：14 个 Dialog 同步 import，主 chunk 加载约 477KB
+// 改造后：14 个 Dialog 各自独立 chunk，主 chunk 减重约 477KB
+//
+// AccountInfoDialog 121KB（最大头）、AddAccountDialog 65KB、SettingsDialog 53KB
+// 配合 vite.config.ts 的 server.warmup，dev 模式下高频 Dialog 仍然第一次打开就很快
+const AddAccountDialog = defineAsyncComponent(() => import('@/components/AddAccountDialog.vue'));
+const EditAccountDialog = defineAsyncComponent(() => import('@/components/EditAccountDialog.vue'));
+const SettingsDialog = defineAsyncComponent(() => import('@/components/SettingsDialog.vue'));
+const BatchImportDialog = defineAsyncComponent(() => import('@/components/BatchImportDialog.vue'));
+const BatchExportDialog = defineAsyncComponent(() => import('@/components/BatchExportDialog.vue'));
+const LogsDialog = defineAsyncComponent(() => import('@/components/LogsDialog.vue'));
+const StatsDialog = defineAsyncComponent(() => import('@/components/StatsDialog.vue'));
+const BillingDialog = defineAsyncComponent(() => import('@/components/BillingDialog.vue'));
+const AccountInfoDialog = defineAsyncComponent(() => import('@/components/AccountInfoDialog.vue'));
+const AboutDialog = defineAsyncComponent(() => import('@/components/AboutDialog.vue'));
+const UpdateDialog = defineAsyncComponent(() => import('@/components/UpdateDialog.vue'));
+const BatchUpdatePlanDialog = defineAsyncComponent(() => import('@/components/BatchUpdatePlanDialog.vue'));
+const TagManageDialog = defineAsyncComponent(() => import('@/components/TagManageDialog.vue'));
+const AutoResetDialog = defineAsyncComponent(() => import('@/components/AutoResetDialog.vue'));
+
+// A2: AccountCard 上提的 7 个共享 Dialog（同样异步加载）
+const CardCreditHistoryDialog = defineAsyncComponent(() => import('@/components/CreditHistoryDialog.vue'));
+const CardAnalyticsDialog = defineAsyncComponent(() => import('@/components/AnalyticsDialog.vue'));
+const CardTeamSettingsDialog = defineAsyncComponent(() => import('@/components/TeamSettingsDialog.vue'));
+const CardTeamManagementDialog = defineAsyncComponent(() => import('@/components/TeamManagementDialog.vue'));
+const CardAutoRefillDialog = defineAsyncComponent(() => import('@/components/AutoRefillDialog.vue'));
+const CardUpdatePlanDialog = defineAsyncComponent(() => import('@/components/UpdatePlanDialog.vue'));
+const CardTurnstileDialog = defineAsyncComponent(() => import('@/components/TurnstileDialog.vue'));
 
 const accountsStore = useAccountsStore();
 const settingsStore = useSettingsStore();
 const uiStore = useUIStore();
 
 const SIDEBAR_MENU_EXPAND_DELAY_MS = 140;
-const ACCOUNT_CARD_INITIAL_RENDER_COUNT = 20;
-const ACCOUNT_CARD_RENDER_BATCH_SIZE = 20;
 const menuCollapsed = ref(uiStore.sidebarCollapsed);
 let sidebarMenuTimer: ReturnType<typeof setTimeout> | undefined;
-let accountRenderFrameId: number | undefined;
+
+// ==================== B5: 虚拟滚动状态 ====================
+// 与 CSS .accounts-grid grid-template-columns: repeat(auto-fill, minmax(272-360px, 360px)) 保持一致
+const CARD_MIN_WIDTH = 272;
+const CARD_MAX_WIDTH = 360;
+const CARD_GAP = 12;  // 水平间距（同行卡片之间）
+// 预估单行高度（用于 DynamicScroller 初始空滚动条计算，实际渲染后会动态测量）
+const ROW_MIN_HEIGHT = 380;
+
+const accountsContainerRef = ref<HTMLDivElement | null>(null);
+const containerWidth = ref(0);
+let containerResizeObserver: ResizeObserver | null = null;
+
+/** 视口可用宽度下能放下多少张卡片/行（与 CSS auto-fill 同样逻辑） */
+const columnsPerRow = computed(() => {
+  const w = containerWidth.value;
+  if (w <= 0) return 1;
+  return Math.max(1, Math.floor((w + CARD_GAP) / (CARD_MIN_WIDTH + CARD_GAP)));
+});
+
+/** 每行使用的内联 grid 样式（与 CSS 完全一致） */
+const rowGridStyle = computed(() => ({
+  display: 'grid',
+  gridTemplateColumns: `repeat(${columnsPerRow.value}, minmax(${CARD_MIN_WIDTH}px, ${CARD_MAX_WIDTH}px))`,
+  gap: `${CARD_GAP}px`,
+}));
+
+interface AccountRow {
+  rowKey: string;
+  accounts: Account[];
+  /** sizeDependencies：告知 DynamicScroller 这些值变化时需要重测高度 */
+  heightDeps: string[];
+}
+
+/** 把分页账号按 columnsPerRow 切成行，每行作为 DynamicScroller 的一个 item */
+const accountRows = computed<AccountRow[]>(() => {
+  const cols = columnsPerRow.value;
+  const accounts = accountsStore.paginatedAccounts;
+  const rows: AccountRow[] = [];
+  for (let i = 0; i < accounts.length; i += cols) {
+    const slice = accounts.slice(i, i + cols);
+    rows.push({
+      // P3: rowKey 用「行索引+列数」而非「首张卡 id+列数」。
+      // 翻页时各行 rowKey 保持稳定 → DynamicScroller 复用 DynamicScrollerItem 外壳，
+      // 避免整个虚拟滚动状态（滚动位置 / 高度缓存）被销毁重建。
+      // 卡片级别仍由 AccountCard 上的 :key="account.id" 驱动增量更新。
+      rowKey: `${i / cols}|${cols}`,
+      accounts: slice,
+      // heightDeps 把卡片数据/状态编进去，账号变化时 DynamicScroller 重测当前行高度。
+      heightDeps: slice.map(a => `${a.id}:${a.tags.length}:${a.status || ''}`),
+    });
+  }
+  return rows;
+});
 
 const activeMenu = ref('accounts');
 const searchQuery = ref('');
@@ -700,10 +830,8 @@ const showBatchGroupDialog = ref(false);
 const batchGroupTarget = ref('');
 const isBatchUpdatingGroup = ref(false);
 const showAutoResetDialog = ref(false);
-const showCardGeneratorDialog = ref(false);
-const visibleAccountCount = ref(ACCOUNT_CARD_INITIAL_RENDER_COUNT);
-const renderedAccounts = computed(() => accountsStore.paginatedAccounts.slice(0, visibleAccountCount.value));
-const isRenderingAccountBatch = computed(() => visibleAccountCount.value < accountsStore.paginatedAccounts.length);
+// B5: 原渐进式渲染机制（visibleAccountCount + renderedAccounts + isRenderingAccountBatch）
+// 已替换为虚拟滚动（DynamicScroller 只渲染视口内 + buffer），见 accountRows / columnsPerRow
 
 // 排序相关
 const currentSortField = ref<string>('custom');
@@ -897,54 +1025,8 @@ watch(() => uiStore.sidebarCollapsed, (collapsed) => {
   scheduleMenuExpand();
 });
 
-function clearAccountRenderFrame() {
-  if (accountRenderFrameId !== undefined) {
-    cancelAnimationFrame(accountRenderFrameId);
-    accountRenderFrameId = undefined;
-  }
-}
-
-function scheduleAccountBatchRender() {
-  clearAccountRenderFrame();
-
-  const renderNextBatch = () => {
-    const total = accountsStore.paginatedAccounts.length;
-    if (visibleAccountCount.value >= total) {
-      accountRenderFrameId = undefined;
-      return;
-    }
-
-    visibleAccountCount.value = Math.min(
-      visibleAccountCount.value + ACCOUNT_CARD_RENDER_BATCH_SIZE,
-      total
-    );
-
-    if (visibleAccountCount.value < total) {
-      accountRenderFrameId = requestAnimationFrame(renderNextBatch);
-      return;
-    }
-
-    accountRenderFrameId = undefined;
-  };
-
-  accountRenderFrameId = requestAnimationFrame(renderNextBatch);
-}
-
-watch(
-  () => accountsStore.paginatedAccounts.map(account => account.id).join('|'),
-  () => {
-    const total = accountsStore.paginatedAccounts.length;
-    visibleAccountCount.value = Math.min(ACCOUNT_CARD_INITIAL_RENDER_COUNT, total);
-
-    if (visibleAccountCount.value < total) {
-      scheduleAccountBatchRender();
-      return;
-    }
-
-    clearAccountRenderFrame();
-  },
-  { immediate: true }
-);
+// B5: 原渐进式渲染（rAF batch + watch paginatedAccounts）已删除
+// 虚拟滚动 (DynamicScroller) 已自动处理"只渲染视口内卡片"，无需手动控制 mount 节奏
 
 // 全选状态：在分组视图中用该分组账号数判断，无分组时用总数
 const isAllSelected = computed(() => {
@@ -2171,14 +2253,39 @@ onMounted(async () => {
       console.warn('[Updater] silent check failed:', e);
     }
   }, 3000);
+
+  // B5: 虚拟滚动容器宽度监听由下方 watch(accountsContainerRef) 处理
+  // 因为初始 loading 时 div v-else 未 mount，ref 此时为 null
 });
 
-// 组件卸载时清除自动重置定时器
+// B5: 监听 accountsContainerRef 变化（初始 loading → 数据就绪时才 mount）
+// 一旦 div 出现，绑定 ResizeObserver；div 消失时（如切换到 empty 状态）自动 disconnect
+watch(accountsContainerRef, (el) => {
+  // 切换/销毁前的 observer 必须先释放
+  containerResizeObserver?.disconnect();
+  containerResizeObserver = null;
+  if (!el) return;
+
+  containerWidth.value = el.clientWidth;
+  containerResizeObserver = new ResizeObserver((entries) => {
+    for (const entry of entries) {
+      const w = entry.contentRect.width;
+      if (Math.abs(w - containerWidth.value) > 1) {
+        containerWidth.value = w;
+      }
+    }
+  });
+  containerResizeObserver.observe(el);
+}, { flush: 'post' });
+
+// 组件卸载
 onUnmounted(() => {
   clearSidebarMenuTimer();
-  clearAccountRenderFrame();
   autoResetTimerMap.value.forEach(timer => clearInterval(timer));
   autoResetTimerMap.value.clear();
+  // B5: 释放虚拟滚动相关资源
+  containerResizeObserver?.disconnect();
+  containerResizeObserver = null;
 });
 </script>
 
@@ -2816,9 +2923,16 @@ onUnmounted(() => {
   margin-left: 12px;
 }
 
+/* B5: 让 el-main → accounts-container → DynamicScroller 形成正确的 flex 高度链
+   关键：el-main 默认有 overflow:auto，现在改为内部 DynamicScroller 接管滚动 */
 .main-content {
   background: #f5f7fa;
   padding: 8px 6px;
+  /* B5: 取消 el-main 的滚动，由内部 DynamicScroller 滚动 */
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  min-height: 0;
 }
 
 .loading-container,
@@ -2829,12 +2943,17 @@ onUnmounted(() => {
   justify-content: center;
 }
 
+/* B5: accounts-container 必须 flex column 撑开 + min-height:0 才能让子级 DynamicScroller 拿到剩余高度 */
 .accounts-container {
   width: 100%;
   position: relative;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
 }
 
-.accounts-container.is-refreshing .accounts-grid {
+.accounts-container.is-refreshing .accounts-virtual-scroller {
   opacity: 0.72;
   pointer-events: none;
 }
@@ -2856,29 +2975,25 @@ onUnmounted(() => {
   font-size: 13px;
 }
 
-.accounts-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(clamp(272px, 28vw, 360px), 360px));
-  gap: 16px;
-  padding: 0 0 20px;
+/* B5: 虚拟滚动容器 - flex:1 占据 accounts-container 剩余高度，自身内部滚动 */
+.accounts-virtual-scroller {
+  flex: 1;
+  min-height: 0;
+  width: 100%;
+}
+
+/* B5: 每行卡片（DynamicScrollerItem 内部）- 列数和列宽由 :style rowGridStyle 动态控制 */
+.account-row {
+  /* display/grid-template-columns/gap 由 rowGridStyle 内联设置（响应式列数） */
+  padding-bottom: 10px;  /* 垂直间距（行与行之间） */
   justify-content: start;
   align-items: start;
 }
 
-.account-rendering-hint {
-  display: flex;
-  justify-content: center;
-  padding: 10px 0 4px;
-  color: #909399;
-  font-size: 12px;
-}
+/* B5: 原 .account-rendering-hint（渐进式渲染提示）已删除（DOM 不再存在） */
 
-/* 响应式布局 */
-@media (max-width: 1400px) {
-  .accounts-grid {
-    grid-template-columns: repeat(auto-fill, minmax(min(100%, 300px), 360px));
-  }
-}
+/* 响应式布局 - B5: .accounts-grid 已被 .account-row 替代，
+   响应式列数现在由 columnsPerRow computed 根据 ResizeObserver 动态计算 */
 
 @media (max-width: 1024px) {
   .header {
@@ -2913,16 +3028,9 @@ onUnmounted(() => {
   .main-content {
     padding: 10px 6px;
   }
-  
-  .accounts-grid {
-    gap: 8px;
-  }
 }
 
 @media (max-width: 768px) {
-  .accounts-grid {
-    grid-template-columns: 1fr;
-  }
   
   .header {
     padding: 0 6px;

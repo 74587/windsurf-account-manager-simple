@@ -217,11 +217,6 @@ pub fn run() {
             commands::check_patch_status,
             commands::validate_windsurf_path,
             
-            // 伟哥(寸止)命令
-            commands::check_cunzhi_status,
-            commands::install_cunzhi,
-            commands::uninstall_cunzhi,
-            
             // 数据备份命令
             commands::create_backup,
             commands::list_backups,

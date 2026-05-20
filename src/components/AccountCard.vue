@@ -19,7 +19,7 @@
       <div class="account-info">
         <div class="email" :title="'点击复制: ' + account.email" @click.stop="copyEmail">{{ displayEmail }}</div>
         <el-tag 
-          v-if="account.nickname"
+          v-if="settingsStore.settings?.enableNicknameField && account.nickname"
           type="warning"
           size="small"
           effect="light"
@@ -27,20 +27,16 @@
         >
           {{ account.nickname }}
         </el-tag>
-        <el-tooltip
+        <el-tag
           v-if="account.auth_provider === 'devin'"
-          content="通过 Devin Session 认证（新体系）"
-          placement="top"
+          v-tooltip="'通过 Devin Session 认证（新体系）'"
+          type="success"
+          size="small"
+          effect="dark"
+          class="devin-tag"
         >
-          <el-tag
-            type="success"
-            size="small"
-            effect="dark"
-            class="devin-tag"
-          >
-            Devin
-          </el-tag>
-        </el-tooltip>
+          Devin
+        </el-tag>
       </div>
       <div class="status-indicator" :class="statusClass">
         <span class="status-dot"></span>
@@ -139,297 +135,221 @@
       
       <!-- 信息标签组 -->
       <div class="info-tags">
-        <el-tooltip v-if="account.group" content="分组" placement="top">
-          <el-tag 
-            size="small"
-            class="info-tag group-tag"
-          >
-            <el-icon><Folder /></el-icon>
-            <span>{{ account.group }}</span>
-          </el-tag>
-        </el-tooltip>
+        <el-tag
+          v-if="account.group"
+          v-tooltip="'分组'"
+          size="small"
+          class="info-tag group-tag"
+        >
+          <el-icon><Folder /></el-icon>
+          <span>{{ account.group }}</span>
+        </el-tag>
 
-        <el-tooltip v-if="account.created_at" content="创建时间" placement="top">
-          <el-tag 
-            size="small"
-            class="info-tag create-tag"
-          >
-            <el-icon><Calendar /></el-icon>
-            <span>{{ formatDate(account.created_at) }}</span>
-          </el-tag>
-        </el-tooltip>
+        <el-tag
+          v-if="account.created_at"
+          v-tooltip="'创建时间'"
+          size="small"
+          class="info-tag create-tag"
+        >
+          <el-icon><Calendar /></el-icon>
+          <span>{{ formatDate(account.created_at) }}</span>
+        </el-tag>
 
-        <el-tooltip v-if="account.token_expires_at" :content="tokenExpiryTooltip" placement="top">
-          <el-tag
-            size="small"
-            class="info-tag token-tag"
-            :type="tokenExpiryType"
-          >
-            <el-icon><Key /></el-icon>
-            <span>{{ formatDate(account.token_expires_at) }}</span>
-          </el-tag>
-        </el-tooltip>
+        <el-tag
+          v-if="account.token_expires_at"
+          v-tooltip="tokenExpiryTooltip"
+          size="small"
+          class="info-tag token-tag"
+          :type="tokenExpiryType"
+        >
+          <el-icon><Key /></el-icon>
+          <span>{{ formatDate(account.token_expires_at) }}</span>
+        </el-tag>
       </div>
     </div>
 
     <div class="card-actions">
       <!-- 第一排按钮（6个） -->
       <div class="action-buttons">
-        <el-tooltip content="批量重置团队积分" placement="top">
-          <el-button
-            size="small"
-            :icon="Refresh"
-            circle
-            type="warning"
-            plain
-            @click="handleBatchResetTeamCredits"
-            :loading="isResettingCredits"
-          />
-        </el-tooltip>
+        <el-button
+          v-tooltip="'批量重置团队积分'"
+          size="small"
+          :icon="Refresh"
+          circle
+          type="warning"
+          plain
+          @click="handleBatchResetTeamCredits"
+          :loading="isResettingCredits"
+        />
 
-        <el-tooltip content="查询账单" placement="top">
-          <el-button 
-            size="small" 
-            :icon="Document"
-            circle
-            @click="handleGetBilling"
-            :loading="isGettingBilling"
-          />
-        </el-tooltip>
+        <el-button
+          v-tooltip="'查询账单'"
+          size="small"
+          :icon="Document"
+          circle
+          @click="handleGetBilling"
+          :loading="isGettingBilling"
+        />
 
-        <el-tooltip content="自动充值" placement="top">
-          <el-button
-            size="small"
-            :icon="Money"
-            circle
-            type="warning"
-            plain
-            @click="handleAutoRefill"
-          />
-        </el-tooltip>
+        <el-button
+          v-tooltip="'自动充值'"
+          size="small"
+          :icon="Money"
+          circle
+          type="warning"
+          plain
+          @click="handleAutoRefill"
+        />
 
-        <el-tooltip content="积分记录" placement="top">
-          <el-button 
-            size="small" 
-            :icon="TrendCharts"
-            circle
-            @click="handleShowCreditHistory"
-            :loading="isLoadingCreditHistory"
-          />
-        </el-tooltip>
+        <el-button
+          v-tooltip="'积分记录'"
+          size="small"
+          :icon="TrendCharts"
+          circle
+          @click="handleShowCreditHistory"
+          :loading="isLoadingCreditHistory"
+        />
 
-        <el-tooltip :content="refreshButtonTooltip" placement="top">
-          <el-button 
-            size="small" 
-            :icon="RefreshRight"
-            circle
-            @click="handleRefreshToken"
-            :loading="isRefreshing"
-          />
-        </el-tooltip>
+        <el-button
+          v-tooltip="refreshButtonTooltip"
+          size="small"
+          :icon="RefreshRight"
+          circle
+          @click="handleRefreshToken"
+          :loading="isRefreshing"
+        />
 
-        <el-tooltip content="账号信息" placement="top">
-          <el-button 
-            size="small" 
-            :icon="User"
-            circle
-            @click="handleAccountInfo"
-          />
-        </el-tooltip>
+        <el-button
+          v-tooltip="'账号信息'"
+          size="small"
+          :icon="User"
+          circle
+          @click="handleAccountInfo"
+        />
 
         <!-- 转换登录方式（Firebase ↔ Devin）：按当前 auth_provider 动态切换 tooltip 与动作 -->
-        <el-tooltip :content="convertActionLabel" placement="top">
-          <el-button
-            size="small"
-            :icon="Connection"
-            circle
-            type="warning"
-            plain
-            @click="handleConvertAuthProvider"
-            :loading="isConvertingAuth"
-          />
-        </el-tooltip>
+        <el-button
+          v-tooltip="convertActionLabel"
+          size="small"
+          :icon="Connection"
+          circle
+          type="warning"
+          plain
+          @click="handleConvertAuthProvider"
+          :loading="isConvertingAuth"
+        />
 
-        <el-tooltip content="删除用户(Windsurf)" placement="top">
-          <el-button
-            size="small"
-            :icon="UserFilled"
-            circle
-            type="warning"
-            plain
-            :loading="deletingUser"
-            @click="handleDeleteWindsurfUser"
-          />
-        </el-tooltip>
+        <el-button
+          v-tooltip="'删除用户(Windsurf)'"
+          size="small"
+          :icon="UserFilled"
+          circle
+          type="warning"
+          plain
+          :loading="deletingUser"
+          @click="handleDeleteWindsurfUser"
+        />
 
-        <el-tooltip content="删除" placement="top">
-          <el-button
-            size="small"
-            :icon="Delete"
-            circle
-            type="danger"
-            plain
-            @click="handleDelete"
-          />
-        </el-tooltip>
+        <el-button
+          v-tooltip="'删除'"
+          size="small"
+          :icon="Delete"
+          circle
+          type="danger"
+          plain
+          @click="handleDelete"
+        />
       </div>
       
       <!-- 第二排按钮（5个） -->
       <div class="action-buttons">
-        <el-tooltip content="编辑" placement="top">
-          <el-button 
-            size="small" 
-            :icon="Edit"
-            circle
-            @click="handleEdit"
-          />
-        </el-tooltip>
+        <el-button
+          v-tooltip="'编辑'"
+          size="small"
+          :icon="Edit"
+          circle
+          @click="handleEdit"
+        />
 
-        <el-tooltip content="重新登录" placement="top">
-          <el-button 
-            size="small" 
-            :icon="Key"
-            circle
-            @click="handleLogin"
-          />
-        </el-tooltip>
+        <el-button
+          v-tooltip="'重新登录'"
+          size="small"
+          :icon="Key"
+          circle
+          @click="handleLogin"
+        />
 
-        <el-tooltip content="使用分析" placement="top">
-          <el-button
-            size="small"
-            :icon="DataAnalysis"
-            circle
-            @click="handleShowAnalytics"
-          />
-        </el-tooltip>
+        <el-button
+          v-tooltip="'使用分析'"
+          size="small"
+          :icon="DataAnalysis"
+          circle
+          @click="handleShowAnalytics"
+        />
 
-        <el-tooltip content="团队设置" placement="top">
-          <el-button
-            size="small"
-            :icon="Setting"
-            circle
-            @click="handleTeamSettings"
-          />
-        </el-tooltip>
+        <el-button
+          v-tooltip="'团队设置'"
+          size="small"
+          :icon="Setting"
+          circle
+          @click="handleTeamSettings"
+        />
 
-        <el-tooltip content="团队管理" placement="top">
-          <el-button
-            size="small"
-            :icon="UserFilled"
-            circle
-            type="primary"
-            plain
-            @click="handleTeamManagement"
-          />
-        </el-tooltip>
+        <el-button
+          v-tooltip="'团队管理'"
+          size="small"
+          :icon="UserFilled"
+          circle
+          type="primary"
+          plain
+          @click="handleTeamManagement"
+        />
 
-        <el-tooltip content="更换订阅" placement="top">
-          <el-button
-            size="small"
-            :icon="Sell"
-            circle
-            @click="handleUpdatePlan"
-            :loading="isUpdatingPlan"
-          />
-        </el-tooltip>
+        <el-button
+          v-tooltip="'更换订阅'"
+          size="small"
+          :icon="Sell"
+          circle
+          @click="handleUpdatePlan"
+          :loading="isUpdatingPlan"
+        />
 
-        <el-tooltip content="获取试用链接" placement="top">
-          <el-button
-            size="small"
-            :icon="Link"
-            circle
-            @click="handleGetTrialLink"
-            :loading="isGettingTrialLink"
-          />
-        </el-tooltip>
+        <el-button
+          v-tooltip="'获取试用链接'"
+          size="small"
+          :icon="Link"
+          circle
+          @click="handleGetTrialLink"
+          :loading="isGettingTrialLink"
+        />
 
-        <el-tooltip content="检查Pro试用资格" placement="top">
-          <el-button
-            size="small"
-            :icon="Trophy"
-            circle
-            type="info"
-            plain
-            @click="handleCheckProTrial"
-            :loading="isCheckingProTrial"
-          />
-        </el-tooltip>
+        <el-button
+          v-tooltip="'检查Pro试用资格'"
+          size="small"
+          :icon="Trophy"
+          circle
+          type="info"
+          plain
+          @click="handleCheckProTrial"
+          :loading="isCheckingProTrial"
+        />
 
-        <el-tooltip content="一键切号" placement="top">
-          <el-button
-            size="small"
-            :icon="Switch"
-            circle
-            type="success"
-            plain
-            @click="handleSwitchAccount"
-            :loading="isSwitching"
-          />
-        </el-tooltip>
+        <el-button
+          v-tooltip="'一键切号'"
+          size="small"
+          :icon="Switch"
+          circle
+          type="success"
+          plain
+          @click="handleSwitchAccount"
+          :loading="isSwitching"
+        />
       </div>
     </div>
   </div>
 
-  <!-- 积分记录对话框 -->
-  <CreditHistoryDialog
-    v-if="showCreditHistoryDialog"
-    v-model="showCreditHistoryDialog"
-    :account-id="account.id"
-  />
-
-  <!-- 座位更新结果对话框 -->
-  <UpdateSeatsResultDialog
-    v-if="showSeatsResultDialog"
-    v-model="showSeatsResultDialog"
-    :result-data="seatsResultData"
-  />
-
-  <!-- 使用分析对话框 -->
-  <AnalyticsDialog
-    v-if="showAnalyticsDialog"
-    v-model="showAnalyticsDialog"
-    :account-id="account.id"
-    :account-email="account.email"
-  />
-
-  <!-- 团队设置对话框 -->
-  <TeamSettingsDialog
-    v-if="showTeamSettingsDialog"
-    v-model="showTeamSettingsDialog"
-    :account-id="account.id"
-  />
-
-  <!-- 团队管理对话框 -->
-  <TeamManagementDialog
-    v-if="showTeamManagementDialog"
-    v-model="showTeamManagementDialog"
-    :account-id="account.id"
-  />
-
-  <!-- 自动充值设置对话框 -->
-  <AutoRefillDialog
-    v-if="showAutoRefillDialog"
-    v-model="showAutoRefillDialog"
-    :account-id="account.id"
-  />
-
-  <!-- 更换订阅对话框 -->
-  <UpdatePlanDialog
-    v-if="showUpdatePlanDialog"
-    v-model="showUpdatePlanDialog"
-    :account-id="account.id"
-    :account="account"
-    @success="handleUpdatePlanSuccess"
-  />
-
-  <!-- Turnstile 验证对话框 -->
-  <TurnstileDialog
-    v-if="showTurnstileDialog"
-    :visible="showTurnstileDialog"
-    @update:visible="showTurnstileDialog = $event"
-    @success="handleTurnstileSuccess"
-    @cancel="showTurnstileDialog = false"
-  />
+  <!-- A2 优化：以下 8 个 Dialog 已上提到 MainLayout，由 uiStore.cardDialog 单实例驱动
+       原本一页 20 张卡片 = 160 个 v-if Dialog 节点，现 = 1 套共享 Dialog -->
 
   <!-- 切号进度弹窗（独立居中 Dialog） -->
   <!-- 运行中禁止通过遮罩 / Esc 关闭，强制用户看到全流程；成功/失败时允许关闭 -->
@@ -535,14 +455,11 @@ import { h } from 'vue';
 import type { Account } from '@/types';
 import { apiService, accountApi, devinApi } from '@/api';
 import { useAccountsStore, useUIStore, useSettingsStore } from '@/store';
-import UpdateSeatsResultDialog from '@/components/UpdateSeatsResultDialog.vue';
-import CreditHistoryDialog from '@/components/CreditHistoryDialog.vue';
-import AnalyticsDialog from '@/components/AnalyticsDialog.vue';
-import TeamSettingsDialog from '@/components/TeamSettingsDialog.vue';
-import TeamManagementDialog from '@/components/TeamManagementDialog.vue';
-import AutoRefillDialog from '@/components/AutoRefillDialog.vue';
-import UpdatePlanDialog from '@/components/UpdatePlanDialog.vue';
-import TurnstileDialog from '@/components/TurnstileDialog.vue';
+// A2 优化：以下 8 个 Dialog 已上提到 MainLayout（src/views/MainLayout.vue）
+// 由 uiStore.cardDialog 单实例驱动，AccountCard 不再直接 import
+// - UpdateSeatsResultDialog (注：原 AccountCard 内为死代码，未实际使用)
+// - CreditHistoryDialog / AnalyticsDialog / TeamSettingsDialog / TeamManagementDialog
+// - AutoRefillDialog / UpdatePlanDialog / TurnstileDialog
 import dayjs from 'dayjs';
 import { maskEmail } from '@/utils/privacy';
 
@@ -806,16 +723,9 @@ function closeSwitchProgress() {
 const isResettingCredits = ref(false);
 const isUpdatingPlan = ref(false);
 const billingData = ref<any>(null);
-const showCreditHistoryDialog = ref(false);
-const showSeatsResultDialog = ref(false);
-const showAnalyticsDialog = ref(false);
-const showTeamSettingsDialog = ref(false);
-const showTeamManagementDialog = ref(false);
-const showAutoRefillDialog = ref(false);
-const showUpdatePlanDialog = ref(false);
-const showTurnstileDialog = ref(false);
+// A2 优化：以下 Dialog 状态已迁移到 uiStore.cardDialog（共享单实例）
+// 仅保留 pendingTurnstileToken（业务上下文：在 Turnstile 成功 → 后续付款链接请求之间传递 token）
 const pendingTurnstileToken = ref('');
-const seatsResultData = ref<any>(null);
 
 // 判断是否为付费计划（非 Free）
 const isPaidPlan = computed(() => {
@@ -1022,7 +932,7 @@ async function handleGetBilling() {
 }
 
 async function handleShowCreditHistory() {
-  showCreditHistoryDialog.value = true;
+  uiStore.openCardDialog({ type: 'creditHistory', account: props.account });
 }
 
 async function handleRefreshToken() {
@@ -1440,21 +1350,21 @@ function handleAccountInfo() {
 
 function handleShowAnalytics() {
   // 显示使用分析对话框
-  showAnalyticsDialog.value = true;
+  uiStore.openCardDialog({ type: 'analytics', account: props.account });
 }
 
 function handleTeamSettings() {
   // 显示团队设置对话框
-  showTeamSettingsDialog.value = true;
+  uiStore.openCardDialog({ type: 'teamSettings', account: props.account });
 }
 
 function handleTeamManagement() {
-  showTeamManagementDialog.value = true;
+  uiStore.openCardDialog({ type: 'teamManagement', account: props.account });
 }
 
 function handleAutoRefill() {
   // 显示自动充值设置对话框
-  showAutoRefillDialog.value = true;
+  uiStore.openCardDialog({ type: 'autoRefill', account: props.account });
 }
 
 // 批量重置团队成员积分
@@ -1595,12 +1505,14 @@ async function handleBatchResetTeamCredits() {
 
 // 更换订阅
 function handleUpdatePlan() {
-  showUpdatePlanDialog.value = true;
-}
-
-// 更换订阅成功回调
-function handleUpdatePlanSuccess() {
-  accountsStore.refreshAccountToken(props.account);
+  uiStore.openCardDialog({
+    type: 'updatePlan',
+    account: props.account,
+    onSuccess: () => {
+      // 更换订阅成功后刷新账号 token / 订阅状态
+      accountsStore.refreshAccountToken(props.account);
+    },
+  });
 }
 
 // 获取试用绑卡链接 - 所有 trial 签约都需要 Turnstile 验证
@@ -1614,7 +1526,12 @@ function handleGetTrialLink() {
   const startTrial = settingsStore.settings?.startTrial ?? true;
 
   if (startTrial) {
-    showTurnstileDialog.value = true;
+    // A2: 打开共享 Turnstile 弹窗，成功回调代替原来的事件函数式
+    uiStore.openCardDialog({
+      type: 'turnstile',
+      account: props.account,
+      onSuccess: (data) => handleTurnstileSuccess((data as string) || ''),
+    });
   } else {
     // 直接付费签约，无需 captcha
     handleTurnstileSuccess('');
@@ -1622,9 +1539,9 @@ function handleGetTrialLink() {
 }
 
 // Turnstile 验证成功后的处理
+// A2: 不再需要 showTurnstileDialog.value = false，store 在触发 onSuccess 前已自动清除状态
 async function handleTurnstileSuccess(turnstileToken: string) {
   pendingTurnstileToken.value = turnstileToken;
-  showTurnstileDialog.value = false;
   
   isGettingTrialLink.value = true;
   try {

@@ -511,6 +511,7 @@ export interface Settings {
   startTrial?: boolean;  // 是否以试用方式开始订阅
   teamName?: string;  // Teams 计划的团队名称
   seatCount?: number;  // Teams 计划的席位数量
+  enableNicknameField?: boolean;  // 是否在 UI 上显示账号的备注名称字段（添加/编辑表单 + 卡片标签），默认 false
 }
 
 /**

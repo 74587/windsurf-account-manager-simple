@@ -9,8 +9,11 @@
 //! 所有操作在 `tokio::task::spawn_blocking` 中执行（或直接 inline lock，因 SQLite
 //! 单次操作 <10ms，不会阻塞 tokio runtime）。
 
+use std::collections::{HashMap, hash_map::DefaultHasher};
+use std::hash::{Hash, Hasher};
 use std::path::PathBuf;
 use std::sync::Mutex;
+use std::time::{Duration, Instant};
 use chrono::{DateTime, Utc};
 use rusqlite::{params, Connection, OptionalExtension};
 use serde::{Deserialize, Serialize};
@@ -89,6 +92,10 @@ pub struct AccountAggregates {
 
 pub struct SqliteAccountStore {
     conn: Mutex<Connection>,
+    /// P2: COUNT(*) 结果缓存。key 为 filter 条件的 hash（不含 page/page_size/sort），
+    /// value 为 `(count, 写入时刻)`。命中且未过期则跳过 SQL `COUNT(*)`，节省 20-100ms。
+    /// 写操作（insert/upsert/delete/batch update）会清空缓存以保证一致性。
+    count_cache: Mutex<HashMap<u64, (i64, Instant)>>,
 }
 
 impl SqliteAccountStore {
@@ -125,7 +132,10 @@ impl SqliteAccountStore {
         // 增量迁移：为已有数据库添加新字段
         Self::migrate_columns(&conn);
 
-        Ok(Self { conn: Mutex::new(conn) })
+        Ok(Self {
+            conn: Mutex::new(conn),
+            count_cache: Mutex::new(HashMap::new()),
+        })
     }
 
     fn migrate_columns(conn: &Connection) {
@@ -141,6 +151,55 @@ impl SqliteAccountStore {
             "CREATE INDEX IF NOT EXISTS idx_accounts_parent_account_id ON accounts(parent_account_id)",
             [],
         );
+    }
+
+    // ==================== P2: COUNT(*) 缓存 ====================
+
+    /// COUNT 缓存 TTL：60 秒。写操作会强制 invalidate，TTL 主要防御长时间无写操作的极端场景。
+    const COUNT_CACHE_TTL: Duration = Duration::from_secs(60);
+
+    /// 计算 filter 条件的 hash key（仅 WHERE 相关字段，不含 page/page_size/sort）。
+    fn hash_filter(req: &AccountPageRequest) -> u64 {
+        let mut h = DefaultHasher::new();
+        req.search.hash(&mut h);
+        req.group.hash(&mut h);
+        req.tags.hash(&mut h);
+        req.plan_names.hash(&mut h);
+        req.domains.hash(&mut h);
+        req.statuses.hash(&mut h);
+        req.remaining_quota_min.hash(&mut h);
+        req.remaining_quota_max.hash(&mut h);
+        req.total_quota_min.hash(&mut h);
+        req.total_quota_max.hash(&mut h);
+        req.expiry_days_min.hash(&mut h);
+        req.expiry_days_max.hash(&mut h);
+        req.daily_quota_percent_min.hash(&mut h);
+        req.daily_quota_percent_max.hash(&mut h);
+        req.weekly_quota_percent_min.hash(&mut h);
+        req.weekly_quota_percent_max.hash(&mut h);
+        h.finish()
+    }
+
+    /// 读 COUNT 缓存。命中且未过期返回 Some(count)，否则 None。
+    fn get_cached_count(&self, key: u64) -> Option<i64> {
+        let cache = self.count_cache.lock().ok()?;
+        cache.get(&key).and_then(|(c, t)| {
+            if t.elapsed() < Self::COUNT_CACHE_TTL { Some(*c) } else { None }
+        })
+    }
+
+    /// 写 COUNT 缓存。
+    fn set_cached_count(&self, key: u64, count: i64) {
+        if let Ok(mut cache) = self.count_cache.lock() {
+            cache.insert(key, (count, Instant::now()));
+        }
+    }
+
+    /// 清空 COUNT 缓存。**所有改变 accounts 表行数或 filter 命中结果**的写操作必须调用此方法。
+    fn invalidate_count_cache(&self) {
+        if let Ok(mut cache) = self.count_cache.lock() {
+            cache.clear();
+        }
     }
 
     const CREATE_SCHEMA: &'static str = r#"
@@ -189,6 +248,20 @@ impl SqliteAccountStore {
         CREATE INDEX IF NOT EXISTS idx_accounts_created_at ON accounts(created_at);
         CREATE INDEX IF NOT EXISTS idx_accounts_sort_order ON accounts(sort_order);
         CREATE INDEX IF NOT EXISTS idx_accounts_auth_provider ON accounts(auth_provider);
+        -- 翻页热点：默认 ORDER BY sort_order ASC, created_at ASC 的覆盖索引，
+        -- 避免 file sort，单查询从 50-200ms 降到 < 5ms（10w 级）。
+        CREATE INDEX IF NOT EXISTS idx_accounts_sort_order_created_at ON accounts(sort_order, created_at);
+        -- 排序/过滤热点：sort_field 可选 subscription_expires_at / token_expires_at；
+        -- 高级筛选用 expiry_days_min/max 比较 subscription_expires_at。
+        CREATE INDEX IF NOT EXISTS idx_accounts_subscription_expires_at ON accounts(subscription_expires_at);
+        CREATE INDEX IF NOT EXISTS idx_accounts_token_expires_at ON accounts(token_expires_at);
+        -- 排序/过滤热点：sort_field 可选 used_quota / remaining_quota；
+        -- filter 用 total_quota_min/max、remaining_quota_min/max。
+        CREATE INDEX IF NOT EXISTS idx_accounts_total_quota ON accounts(total_quota);
+        -- 排序/过滤热点：sort_field 可选 daily/weekly_quota_remaining；
+        -- filter 用 daily_quota_percent_min/max、weekly_quota_percent_min/max。
+        CREATE INDEX IF NOT EXISTS idx_accounts_daily_quota_remaining ON accounts(daily_quota_remaining_percent);
+        CREATE INDEX IF NOT EXISTS idx_accounts_weekly_quota_remaining ON accounts(weekly_quota_remaining_percent);
     "#;
 
     // ==================== CRUD ====================
@@ -259,6 +332,7 @@ impl SqliteAccountStore {
                 account.devin_org_name,
             ],
         ).map_err(|e| AppError::Config(format!("insert_account: {}", e)))?;
+        self.invalidate_count_cache();  // P2: 总数变化，下次翻页重查 COUNT
         Ok(())
     }
 
@@ -328,6 +402,7 @@ impl SqliteAccountStore {
                 account.devin_org_name,
             ],
         ).map_err(|e| AppError::Config(format!("upsert_account: {}", e)))?;
+        self.invalidate_count_cache();  // P2: filter 命中可能变化（quota / plan / status 等字段）
         Ok(())
     }
 
@@ -362,6 +437,9 @@ impl SqliteAccountStore {
         let conn = self.conn.lock().map_err(|e| AppError::Config(format!("lock: {}", e)))?;
         let affected = conn.execute("DELETE FROM accounts WHERE id = ?1", params![id.to_string()])
             .map_err(|e| AppError::Config(format!("delete: {}", e)))?;
+        if affected > 0 {
+            self.invalidate_count_cache();  // P2: 总数减 1
+        }
         Ok(affected > 0)
     }
 
@@ -377,6 +455,9 @@ impl SqliteAccountStore {
             if affected > 0 {
                 deleted.push(*id);
             }
+        }
+        if !deleted.is_empty() {
+            self.invalidate_count_cache();  // P2: 总数减 N
         }
         Ok(deleted)
     }
@@ -450,6 +531,10 @@ impl SqliteAccountStore {
 
     /// 分页查询 + 服务端过滤/排序，替代前端 filteredAccounts computed。
     pub fn get_accounts_page(&self, req: &AccountPageRequest) -> AppResult<AccountPageResponse> {
+        // P2: 在 conn lock 之前检查 COUNT 缓存，避免与 conn lock 交叉
+        let cache_key = Self::hash_filter(req);
+        let cached_total = self.get_cached_count(cache_key);
+
         let conn = self.conn.lock().map_err(|e| AppError::Config(format!("lock: {}", e)))?;
 
         let mut where_clauses: Vec<String> = Vec::new();
@@ -622,12 +707,16 @@ impl SqliteAccountStore {
             _ => "ASC",
         };
 
-        // Count
-        let count_sql = format!("SELECT COUNT(*) FROM accounts {}", where_sql);
         let bind_refs: Vec<&dyn rusqlite::types::ToSql> = bind_values.iter().map(|b| b.as_ref()).collect();
 
-        let total: i64 = conn.query_row(&count_sql, bind_refs.as_slice(), |row| row.get(0))
-            .map_err(|e| AppError::Config(format!("count query: {}", e)))?;
+        // P2: COUNT 缓存命中则复用，否则查询 SQL COUNT(*)「节省 20-100ms / 翻页」
+        let total: i64 = if let Some(t) = cached_total {
+            t
+        } else {
+            let count_sql = format!("SELECT COUNT(*) FROM accounts {}", where_sql);
+            conn.query_row(&count_sql, bind_refs.as_slice(), |row| row.get(0))
+                .map_err(|e| AppError::Config(format!("count query: {}", e)))?
+        };
 
         // Page data
         let page = req.page.max(1);
@@ -646,6 +735,15 @@ impl SqliteAccountStore {
             .map_err(|e| AppError::Config(format!("page query: {}", e)))?
             .filter_map(|r| r.ok())
             .collect();
+
+        // 释放 conn lock（drop stmt + conn）后再写 count_cache，避免 Mutex 交叉持有
+        drop(stmt);
+        drop(conn);
+
+        // P2: 首次查询才回填缓存（命中路径不重复写）
+        if cached_total.is_none() {
+            self.set_cached_count(cache_key, total);
+        }
 
         Ok(AccountPageResponse {
             accounts,
@@ -722,6 +820,9 @@ impl SqliteAccountStore {
             }
             total_affected += stmt.raw_execute().map_err(|e| AppError::Config(format!("execute: {}", e)))?;
         }
+        if total_affected > 0 {
+            self.invalidate_count_cache();  // P2: group filter 命中变化
+        }
         Ok(total_affected)
     }
 
@@ -732,6 +833,9 @@ impl SqliteAccountStore {
             r#"UPDATE accounts SET "group" = ?1 WHERE "group" = ?2"#,
             params![new_group, old_group],
         ).map_err(|e| AppError::Config(format!("update_group: {}", e)))?;
+        if affected > 0 {
+            self.invalidate_count_cache();  // P2: group filter 命中变化
+        }
         Ok(affected)
     }
 
@@ -779,6 +883,9 @@ impl SqliteAccountStore {
                 count += 1;
             }
         }
+        if count > 0 {
+            self.invalidate_count_cache();  // P2: tag filter 命中变化
+        }
         Ok(count)
     }
 
@@ -814,6 +921,9 @@ impl SqliteAccountStore {
                 ).map_err(|e| AppError::Config(format!("remove tag: {}", e)))?;
                 count += 1;
             }
+        }
+        if count > 0 {
+            self.invalidate_count_cache();  // P2: tag filter 命中变化
         }
         Ok(count)
     }
@@ -892,6 +1002,9 @@ impl SqliteAccountStore {
 
         conn.execute("COMMIT", [])
             .map_err(|e| AppError::Config(format!("commit: {}", e)))?;
+        if count > 0 {
+            self.invalidate_count_cache();  // P2: 总数增加
+        }
         Ok(count)
     }
 

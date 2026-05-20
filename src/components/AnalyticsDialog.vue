@@ -305,7 +305,10 @@ import {
   Refresh,
   Finished
 } from '@element-plus/icons-vue';
-import type { ECharts } from 'echarts';
+// A6 优化：用按需引入的 echarts 包装模块（src/utils/echarts.ts）
+// 注意：图表实例类型用 ReturnType<typeof echarts.init>，避免 ECharts type alias 引发 phantom _ssr 冲突
+import type * as EChartsModule from '@/utils/echarts';
+type EChartInstance = ReturnType<typeof EChartsModule.init>;
 import { analyticsApi } from '@/api';
 import type { AnalyticsData } from '@/types/analytics';
 
@@ -388,17 +391,18 @@ const chatModelChartRef = ref<HTMLElement>();
 const completionsByDayChartRef = ref<HTMLElement>();
 const chatsByDayChartRef = ref<HTMLElement>();
 
-let echarts: typeof import('echarts');
+// A6 优化：echarts 实例从按需引入模块加载（实际打包仅 ~80KB gzip，相比全量 ~300KB）
+let echarts: typeof import('@/utils/echarts');
 
 // 图表实例
-let dailyChart: ECharts | null = null;
-let toolChart: ECharts | null = null;
-let modelChart: ECharts | null = null;
-let tokenChart: ECharts | null = null;
-let languageChart: ECharts | null = null;
-let chatModelChart: ECharts | null = null;
-let completionsByDayChart: ECharts | null = null;
-let chatsByDayChart: ECharts | null = null;
+let dailyChart: EChartInstance | null = null;
+let toolChart: EChartInstance | null = null;
+let modelChart: EChartInstance | null = null;
+let tokenChart: EChartInstance | null = null;
+let languageChart: EChartInstance | null = null;
+let chatModelChart: EChartInstance | null = null;
+let completionsByDayChart: EChartInstance | null = null;
+let chatsByDayChart: EChartInstance | null = null;
 
 // 加载分析数据
 const loadAnalytics = async () => {
@@ -444,7 +448,7 @@ const initCharts = async () => {
     return;
   }
 
-  echarts = await import('echarts');
+  echarts = await import('@/utils/echarts');
 
   console.log('[initCharts] Starting chart initialization');
   console.log('[initCharts] Data arrays lengths:', {

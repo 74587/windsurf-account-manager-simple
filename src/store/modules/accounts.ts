@@ -127,8 +127,15 @@ export const useAccountsStore = defineStore('accounts', () => {
    */
   async function fetchPage() {
     const requestId = ++pageFetchRequestId;
-    loading.value = true;
     error.value = null;
+    // P4: loading 延迟显示。翻页/排序若 < 200ms 完成则不显示 loading overlay，避免闪烁；
+    //     超过 200ms 才设为 true，让用户感知到"在加载"。
+    const LOADING_SHOW_DELAY_MS = 200;
+    const loadingTimer = setTimeout(() => {
+      if (requestId === pageFetchRequestId) {
+        loading.value = true;
+      }
+    }, LOADING_SHOW_DELAY_MS);
     try {
       const f = currentFilter.value;
       const request: AccountPageRequest = {
@@ -165,6 +172,7 @@ export const useAccountsStore = defineStore('accounts', () => {
       }
       throw e;
     } finally {
+      clearTimeout(loadingTimer);
       if (requestId === pageFetchRequestId) {
         loading.value = false;
       }

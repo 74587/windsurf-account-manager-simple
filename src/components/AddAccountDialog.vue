@@ -398,7 +398,7 @@
         </el-form-item>
       </template>
       
-      <el-form-item label="备注名称" prop="nickname">
+      <el-form-item v-if="settingsStore.settings?.enableNicknameField" label="备注名称" prop="nickname">
         <el-input
           v-model="formData.nickname"
           placeholder="留空则使用邮箱用户名"

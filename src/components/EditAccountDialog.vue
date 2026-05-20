@@ -22,7 +22,7 @@
         />
       </el-form-item>
       
-      <el-form-item label="备注名称" prop="nickname">
+      <el-form-item v-if="settingsStore.settings?.enableNicknameField" label="备注名称" prop="nickname">
         <el-input
           v-model="formData.nickname"
           placeholder="请输入备注名称"
@@ -160,18 +160,23 @@ const validatePassword = (_rule: any, value: any, callback: any) => {
   }
 };
 
-const rules: FormRules = {
-  nickname: [
-    { required: true, message: '请输入备注名称', trigger: 'blur' },
-    { max: 20, message: '备注名称最多20个字符', trigger: 'blur' }
-  ],
+// rules 动态化：开关关闭时跳过 nickname 校验，避免 v-if 隐藏表单项后的错误阅历。
+const rules = computed<FormRules>(() => ({
+  ...(settingsStore.settings?.enableNicknameField
+    ? {
+        nickname: [
+          { required: true, message: '请输入备注名称', trigger: 'blur' },
+          { max: 20, message: '备注名称最多20个字符', trigger: 'blur' }
+        ]
+      }
+    : {}),
   newPassword: [
     { min: 6, message: '密码长度至少6位', trigger: 'blur' }
   ],
   confirmPassword: [
     { validator: validatePassword, trigger: 'blur' }
   ]
-};
+}));
 
 const availableTags = computed(() => {
   return accountsStore.allTags;
@@ -211,9 +216,13 @@ async function handleSubmit() {
     
     loading.value = true;
     try {
+      // 开关关闭时：保留原 account.nickname 不动，避免 UI 隐藏状态下误删 nickname 数据
+      const nextNickname = settingsStore.settings?.enableNicknameField
+        ? formData.nickname.trim()
+        : account.nickname;
       const updatedAccount: Account = {
         ...account,
-        nickname: formData.nickname.trim(),
+        nickname: nextNickname,
         tags: formData.tags,
         tagColors: formData.tagColors.filter(tc => formData.tags.includes(tc.name)),
         group: formData.group || undefined

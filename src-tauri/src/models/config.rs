@@ -142,6 +142,8 @@ pub struct Settings {
     pub backup_interval: i32,  // 自动备份间隔（分钟）
     #[serde(default = "default_backup_max_count", rename = "backupMaxCount")]
     pub backup_max_count: i32,  // 最大备份数量
+    #[serde(default, rename = "enableNicknameField")]
+    pub enable_nickname_field: bool,  // 是否在 UI 显示账号的备注名称字段（添加/编辑表单 + 卡片标签），默认 false
 }
 
 fn default_browser_mode() -> String {
@@ -224,6 +226,7 @@ impl Default for Settings {
             auto_backup_enabled: true,  // 默认启用自动备份
             backup_interval: 10,  // 默认10分钟
             backup_max_count: 10,  // 默认最多10份
+            enable_nickname_field: false,  // 默认关闭备注名称字段
         }
     }
 }
