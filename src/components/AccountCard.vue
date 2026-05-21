@@ -886,8 +886,9 @@ function formatQuota(num: number | undefined | null) {
   return (num / 100).toFixed(2);
 }
 
-function handleSelect(value: boolean) {
-  emit('select', value);
+function handleSelect(value: string | number | boolean) {
+  // ElementPlus 2.x 的 el-checkbox @change 入参为 CheckboxValueType（string | number | boolean），统一转 boolean
+  emit('select', Boolean(value));
 }
 
 // 点击卡片空白区域触发选择

@@ -115,8 +115,9 @@ function formatOperationType(type: string) {
   return typeMap[type] || type;
 }
 
-function getOperationTypeTag(type: string) {
-  const tagMap: Record<string, string> = {
+type ElTagType = 'primary' | 'success' | 'warning' | 'info' | 'danger';
+function getOperationTypeTag(type: string): ElTagType {
+  const tagMap: Record<string, ElTagType> = {
     login: 'primary',
     refresh_token: 'info',
     reset_credits: 'success',

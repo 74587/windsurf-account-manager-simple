@@ -1110,13 +1110,15 @@ const showNewApiKeyDialog = ref(false);
 const activeInfoTab = ref('user-details');
 
 // 标签页切换时自动加载数据
-function onInfoTabChange(tabName: string) {
-  if (tabName === 'api-keys') {
+function onInfoTabChange(tabName: string | number) {
+  // ElementPlus 2.x 的 el-tabs @tab-change 入参为 TabPaneName（string | number），统一转字符串后比较
+  const name = String(tabName);
+  if (name === 'api-keys') {
     // Devin 账号使用 session_token 作为 API Key，不调用 Firebase 专用的 GetApiKeySummary
     if (!isDevinAccount.value) {
       loadApiKeys();
     }
-  } else if (tabName === 'provider-keys') {
+  } else if (name === 'provider-keys') {
     loadProviderKeys();
   }
 }

@@ -240,7 +240,7 @@
                 <template #default="{ row }">
                   <el-switch
                     v-model="row.enabled"
-                    @change="(val: boolean) => handleToggleEnabled(row, val)"
+                    @change="(val: string | number | boolean) => handleToggleEnabled(row, Boolean(val))"
                     :loading="row._updating"
                   />
                 </template>
@@ -643,10 +643,12 @@ async function loadStats() {
 }
 
 // Tab 切换处理
-function handleTabChange(tab: string) {
-  if (tab === 'records') {
+function handleTabChange(tab: string | number) {
+  // ElementPlus 2.x 的 el-tabs @tab-change 入参为 TabPaneName（string | number）
+  const name = String(tab);
+  if (name === 'records') {
     loadRecords();
-  } else if (tab === 'stats') {
+  } else if (name === 'stats') {
     loadStats();
   }
 }

@@ -154,14 +154,18 @@ const usageColor = computed(() => {
   return '#67c23a'
 })
 
-function onCustomMonthlyChange(val: number) {
+function onCustomMonthlyChange(val: number | undefined) {
+  // ElInputNumber @change 签名 (cur: number | undefined, prev: number | undefined)，只用新值
+  if (val == null) return
   // 确保是 $40 的倍数
   const rounded = Math.round(val / 40) * 40
   customMonthlyBudget.value = rounded
   settings.value.monthlyTopUpAmount = rounded
 }
 
-function onCustomIncrementChange(val: number) {
+function onCustomIncrementChange(val: number | undefined) {
+  // ElInputNumber @change 签名 (cur: number | undefined, prev: number | undefined)，只用新值
+  if (val == null) return
   // 确保是 $40 的倍数
   const rounded = Math.round(val / 40) * 40
   customIncrement.value = rounded

@@ -22,7 +22,6 @@ declare module 'vue' {
     BatchImportDialog: typeof import('./components/BatchImportDialog.vue')['default']
     BatchUpdatePlanDialog: typeof import('./components/BatchUpdatePlanDialog.vue')['default']
     BillingDialog: typeof import('./components/BillingDialog.vue')['default']
-    CardGeneratorDialog: typeof import('./components/CardGeneratorDialog.vue')['default']
     CreditHistoryDialog: typeof import('./components/CreditHistoryDialog.vue')['default']
     EditAccountDialog: typeof import('./components/EditAccountDialog.vue')['default']
     ElAlert: typeof import('element-plus/es')['ElAlert']

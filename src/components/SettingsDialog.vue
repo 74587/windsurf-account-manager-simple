@@ -1182,7 +1182,9 @@ async function browseWindsurfPath() {
 }
 
 // 处理无感换号开关
-async function handleSeamlessSwitch(value: boolean) {
+async function handleSeamlessSwitch(rawValue: string | number | boolean) {
+  // ElementPlus 2.x 的 el-switch @change 入参为 string | number | boolean，统一转 boolean
+  const value = Boolean(rawValue);
   if (!windsurfPath.value) {
     ElMessage.error('请先检测或设置客户端路径');
     settings.seamlessSwitchEnabled = !value;

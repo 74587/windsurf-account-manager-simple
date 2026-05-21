@@ -261,21 +261,24 @@ function formatNumber(value: number): string {
   return value.toLocaleString();
 }
 
-function getPlanTagType(plan: string): string {
+// ElementPlus 2.x 的 el-tag type prop 仅接受以下联合，'' 会报 TS 错，统一收紧为 'primary'（与默认样式一致）
+type ElTagType = 'primary' | 'success' | 'warning' | 'info' | 'danger';
+
+function getPlanTagType(plan: string): ElTagType {
   const planLower = plan.toLowerCase();
   if (planLower.includes('pro') || planLower.includes('premium')) return 'success';
   if (planLower.includes('free') || planLower.includes('basic')) return 'info';
   if (planLower.includes('team') || planLower.includes('enterprise')) return 'warning';
   if (planLower === '未知') return 'info';
-  return '';
+  return 'primary';
 }
 
-function getOperationTagType(opType: string): string {
+function getOperationTagType(opType: string): ElTagType {
   if (opType.includes('Reset') || opType.includes('Delete') || opType.includes('Remove')) return 'danger';
   if (opType.includes('Add') || opType.includes('Create') || opType.includes('Register')) return 'success';
   if (opType.includes('Update') || opType.includes('Edit') || opType.includes('Rename')) return 'warning';
   if (opType.includes('Login') || opType.includes('Refresh') || opType.includes('Get')) return 'info';
-  return '';
+  return 'primary';
 }
 
 const operationTypeMap: Record<string, string> = {
